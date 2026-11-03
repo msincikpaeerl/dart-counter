@@ -21,7 +21,7 @@ scoring rules   src/scoring/  (pure TypeScript, used by the server)
 ```
 
 - `src/server/app.ts` builds the Fastify app from a `Database` and an upload directory, so tests can inject a stub database.
-- `src/server/db.ts` is the only code that talks to PostgreSQL.
+- `src/server/db.ts` is the only code that talks to PostgreSQL. It also applies the schema migrations at startup (see [database](database.md)).
 - `src/scoring/` holds the X01 rules. It has no UI, server or database dependency; ESLint forbids those imports there.
 - Uploaded files (player photos) are written to `UPLOAD_DIR`, which is a Docker volume in production, and served under `/uploads/`.
 
