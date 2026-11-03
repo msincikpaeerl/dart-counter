@@ -8,6 +8,7 @@ import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Database } from './db.js';
+import { registerGameRoutes } from './games.js';
 import { registerPlayerRoutes } from './players.js';
 
 /** Static front-end files: src/server → ../../public, and the same from dist/server. */
@@ -33,17 +34,16 @@ export async function buildApp({ db, uploadDir }: AppOptions): Promise<FastifyIn
     index: false,
   });
 
-  // Server-rendered page (French UI).
+  // Game setup screen (home page, French UI) and the game page; both are static files.
+  const setupPage = await readFile(join(PUBLIC_DIR, 'index.html'), 'utf-8');
+  const gamePage = await readFile(join(PUBLIC_DIR, 'partie.html'), 'utf-8');
   app.get('/', async (_request, reply) => {
-    return reply
-      .type('text/html; charset=utf-8')
-      .send(
-        '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
-          '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-          '<title>Dart Counter</title></head><body><h1>Dart Counter</h1>' +
-          '<p>Compteur de fléchettes.</p><p><a href="/joueurs">Joueurs</a></p></body></html>',
-      );
+    return reply.type('text/html; charset=utf-8').send(setupPage);
   });
+  app.get('/partie/:id', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(gamePage);
+  });
+  registerGameRoutes(app, db);
 
   // Players screen (French UI); the page itself is a static file.
   const playersPage = await readFile(join(PUBLIC_DIR, 'joueurs.html'), 'utf-8');

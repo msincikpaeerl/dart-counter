@@ -19,7 +19,7 @@ To follow what is happening, run `docker compose logs -f app`.
 
 On the same computer, open `http://localhost:3000` (replace 3000 with your `PORT` if you changed it). From a phone or tablet on the same Wi-Fi, use `http://` followed by the computer's address on your network, then `:` and the port.
 
-You should see the Dart Counter page. To check that the database is connected, open `/api/health`: it shows `"status":"ok"`.
+You should see the game setup screen (see [Starting a game](new-game.md)). To check that the database is connected, open `/api/health`: it shows `"status":"ok"`.
 
 ## Stop the app
 
