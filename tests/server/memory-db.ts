@@ -20,6 +20,7 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
 
   const games: Game[] = [];
   const darts = new Map<number, DartRecord[]>();
+  const results = new Map<number, { winnerId: number; finishedAt: string }>();
 
   return {
     async createGame(mode, playerIds) {
@@ -59,7 +60,27 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     },
     async setWinner(gameId, winnerId) {
       const found = games.find((g) => g.id === gameId);
-      if (found) found.status = winnerId === null ? 'in_progress' : 'finished';
+      if (!found) return;
+      found.status = winnerId === null ? 'in_progress' : 'finished';
+      if (winnerId === null) results.delete(gameId);
+      else
+        results.set(gameId, { winnerId, finishedAt: new Date(Date.now() + gameId).toISOString() });
+    },
+    async listFinishedGames() {
+      return games
+        .filter((g) => g.status === 'finished')
+        .map((g) => {
+          const result = results.get(g.id);
+          return {
+            ...structuredClone(g),
+            // Players are read again so that archiving is reflected, as in the real database.
+            players: g.players.map((p) => ({ ...(players.find((q) => q.id === p.id) ?? p) })),
+            winnerId: result?.winnerId ?? null,
+            startedAt: result?.finishedAt ?? new Date(0).toISOString(),
+            finishedAt: result?.finishedAt ?? new Date(0).toISOString(),
+          };
+        })
+        .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt));
     },
     async ping() {
       if (options.down) throw new Error('down');

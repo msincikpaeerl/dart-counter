@@ -27,4 +27,4 @@ In the list, press **Modifier** next to the player. Change the name, nickname or
 
 ## Archive a player
 
-Press **Archiver** next to the player and confirm. The player disappears from the list used to choose who plays. Their past games are kept.
+Press **Archiver** next to the player and confirm. The player disappears from the list used to choose who plays. Their past games are kept, and so are their statistics (see [Statistics and game history](statistics.md)).

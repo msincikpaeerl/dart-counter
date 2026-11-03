@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- New **Statistiques** screen: per-player games played and won, win %, 3-dart average (bust darts count 0 points), best visit, 180s, visits of 100+ and highest checkout, plus a history of finished games where each visit can be opened; abandoned and unfinished games are left out and archived players keep their figures; see [Statistics and game history](docs/user/statistics.md).
+
 - Unfinished games: opening the app now offers **Reprendre la partie** (scores, player and current turn restored, on any device) or **Abandonner** (the game is kept but left out of statistics); see [Resuming or abandoning a game](docs/user/resume-game.md).
 
 - Keypad input on the game screen: switch between **Cible** and **Pavé numérique** during a game and enter darts with Simple / Double / Triple and 1–20, 25, Bull; the first checkout target now also blinks on the keypad; see [Playing a game](docs/user/playing.md).
