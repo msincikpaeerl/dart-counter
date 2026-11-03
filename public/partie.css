@@ -311,6 +311,154 @@
   color: var(--muted);
 }
 
+.game [hidden] {
+  display: none !important;
+}
+
+.input {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.switch {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+
+.switch button {
+  min-height: 40px;
+  border-radius: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.switch button[aria-pressed='true'] {
+  background: var(--cream);
+  color: #111111;
+}
+
+.pad {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pad-mods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pad-keys {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pad-bulls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mod,
+.key {
+  min-height: 46px;
+  border-radius: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--text);
+}
+
+.mod {
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #141414;
+  color: var(--cream);
+  border: 1px solid #333333;
+}
+
+.mod[aria-pressed='true'][data-mod='1'] {
+  background: var(--cream);
+  color: #111111;
+  border-color: var(--cream);
+}
+
+.mod[aria-pressed='true'][data-mod='2'] {
+  background: var(--red);
+  color: #ffffff;
+  border-color: var(--red);
+}
+
+.mod[aria-pressed='true'][data-mod='3'] {
+  background: var(--green);
+  color: #ffffff;
+  border-color: var(--green);
+}
+
+.key {
+  background: #1b1b1b;
+  border: 1px solid #333333;
+}
+
+.is-double .pad-keys .key {
+  background: #2a1210;
+  border-color: var(--red);
+}
+
+.is-triple .pad-keys .key {
+  background: #0f2416;
+  border-color: var(--green);
+}
+
+.bull25 {
+  background: #10301c;
+  border: 1px solid var(--green);
+}
+
+.bull50 {
+  background: #3a0f0c;
+  border: 1px solid var(--red);
+}
+
+.key:disabled {
+  opacity: 0.35;
+}
+
+.padnext {
+  animation: padb 0.9s ease-in-out infinite;
+}
+
+@keyframes padb {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px #efdcb0;
+  }
+  50% {
+    box-shadow: 0 0 0 3px #ffffff;
+    background: #efdcb0;
+    color: #111111;
+  }
+}
+
 .board-wrap {
   position: relative;
   flex: 1 1 0;
@@ -483,8 +631,48 @@ button:disabled {
     min-height: 64px;
   }
 
-  .board-wrap {
+  .input {
     grid-area: board;
+    gap: 14px;
+  }
+
+  .switch {
+    border-radius: 16px;
+  }
+
+  .switch button {
+    min-height: 48px;
+    font-size: 18px;
+  }
+
+  .pad {
+    gap: 12px;
+  }
+
+  .pad-mods,
+  .pad-keys,
+  .pad-bulls {
+    gap: 12px;
+  }
+
+  .mod,
+  .key {
+    min-height: 64px;
+    border-radius: 14px;
+    font-size: 30px;
+  }
+
+  .mod {
+    font-size: 24px;
+  }
+
+  .pad-keys .key {
+    min-height: 78px;
+  }
+
+  .bull25,
+  .bull50 {
+    min-height: 84px;
   }
 
   .actions {

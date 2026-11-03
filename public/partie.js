@@ -208,10 +208,109 @@
               state.dartsLeft +
               ' fléchette' +
               (state.dartsLeft > 1 ? 's' : '')
-          : 'Touchez la cible pour marquer',
+          : view === 'pad'
+            ? 'Choisissez une touche pour marquer'
+            : 'Touchez la cible pour marquer',
       );
     }
     box.replaceChildren.apply(box, node ? [node] : []);
+  }
+
+  // ---- Keypad ----
+
+  var view = 'board';
+  var modifier = 1;
+  var MOD_PREFIX = { 1: '', 2: 'D', 3: 'T' };
+
+  function buildPad() {
+    var keys = $('pad-keys');
+    for (var n = 1; n <= 20; n++) {
+      var key = el('button', 'key', String(n));
+      key.type = 'button';
+      key.setAttribute('data-key', String(n));
+      keys.appendChild(key);
+    }
+    keys.addEventListener('click', function (event) {
+      var target = event.target.closest ? event.target.closest('[data-key]') : null;
+      if (target) pressKey(Number(target.getAttribute('data-key')));
+    });
+    $('key-25').addEventListener('click', function () {
+      pressKey(25);
+    });
+    $('key-bull').addEventListener('click', function () {
+      pressKey('bull');
+    });
+    var mods = document.querySelectorAll('.mod');
+    for (var i = 0; i < mods.length; i++) {
+      mods[i].addEventListener('click', function (event) {
+        var value = Number(event.currentTarget.getAttribute('data-mod'));
+        // Tapping the active Double or Triple again goes back to Simple.
+        modifier = modifier === value && value > 1 ? 1 : value;
+        renderPad();
+      });
+    }
+    $('view-board').addEventListener('click', function () {
+      setView('board');
+    });
+    $('view-pad').addEventListener('click', function () {
+      setView('pad');
+    });
+  }
+
+  function setView(next) {
+    view = next;
+    modifier = 1;
+    renderView();
+    if (state) render();
+  }
+
+  function pressKey(key) {
+    var dart = window.Keypad.dartFor(key, modifier);
+    modifier = 1;
+    renderPad();
+    if (!dart || !state || state.winnerId !== null) return;
+    send('POST', '/darts', dart);
+  }
+
+  function renderView() {
+    var onPad = view === 'pad';
+    $('pad').hidden = !onPad;
+    $('board-wrap').hidden = onPad;
+    $('view-board').setAttribute('aria-pressed', String(!onPad));
+    $('view-pad').setAttribute('aria-pressed', String(onPad));
+    renderPad();
+  }
+
+  /** Labels and tints of the keys for the modifier, and the blinking checkout target. */
+  function renderPad() {
+    var first =
+      state && state.checkout && state.winnerId === null && !state.bust && state.checkout[0]
+        ? window.Keypad.keyFor(state.checkout[0])
+        : null;
+    var pad = $('pad');
+    pad.className = 'pad' + (modifier === 2 ? ' is-double' : modifier === 3 ? ' is-triple' : '');
+    var mods = pad.querySelectorAll('.mod');
+    for (var m = 0; m < mods.length; m++) {
+      var value = Number(mods[m].getAttribute('data-mod'));
+      mods[m].setAttribute('aria-pressed', String(value === modifier));
+      mods[m].classList.toggle(
+        'padnext',
+        !!first && value > 1 && value === first.modifier && value !== modifier,
+      );
+    }
+    var keys = pad.querySelectorAll('#pad-keys .key');
+    for (var k = 0; k < keys.length; k++) {
+      var n = Number(keys[k].getAttribute('data-key'));
+      keys[k].textContent = MOD_PREFIX[modifier] + n;
+      keys[k].setAttribute('aria-label', WORDS[modifier] + ' ' + n);
+      keys[k].classList.toggle('padnext', !!first && first.key === n);
+    }
+    var k25 = $('key-25');
+    k25.textContent = modifier === 2 ? 'D25 = Bull' : '25';
+    k25.setAttribute('aria-label', modifier === 2 ? 'Bull 50' : 'Bull 25');
+    k25.disabled = modifier === 3;
+    k25.classList.toggle('padnext', !!first && first.key === 25);
+    $('key-bull').classList.toggle('padnext', !!first && first.key === 'bull');
   }
 
   function renderBoard() {
@@ -288,6 +387,7 @@
 
     renderStatus(current, remaining);
     renderBoard();
+    renderPad();
 
     var won = state.winnerId !== null;
     $('winner').hidden = !won;
@@ -350,6 +450,7 @@
   });
 
   buildBoard();
+  buildPad();
   fetch('/api/games/' + encodeURIComponent(id))
     .then(function (response) {
       if (!response.ok) throw new Error('not found');
