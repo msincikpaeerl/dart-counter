@@ -63,6 +63,10 @@ export interface Database {
   /** Creates a game; `playerIds` is the play order. Players must exist. */
   createGame(mode: 301 | 501, playerIds: number[]): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
+  /** The most recently started game still in progress, or null. */
+  getUnfinishedGame(): Promise<Game | null>;
+  /** Closes a game in progress as abandoned (kept in the data, excluded from statistics). */
+  abandonGame(id: number): Promise<void>;
   /** Darts of a game in throwing order. */
   listDarts(gameId: number): Promise<DartRecord[]>;
   addDart(gameId: number, dart: DartRecord): Promise<void>;
@@ -161,6 +165,21 @@ export function createDatabase(databaseUrl: string): Database {
       return game;
     },
     getGame: loadGame,
+    async getUnfinishedGame() {
+      const result = await pool.query<{ id: number }>(
+        `SELECT id::int AS id FROM games WHERE status = 'in_progress'
+         ORDER BY started_at DESC, id DESC LIMIT 1`,
+      );
+      const row = result.rows[0];
+      return row ? loadGame(row.id) : null;
+    },
+    async abandonGame(id) {
+      await pool.query(
+        `UPDATE games SET status = 'abandoned', finished_at = now()
+         WHERE id = $1 AND status = 'in_progress'`,
+        [id],
+      );
+    },
     async listDarts(gameId) {
       const result = await pool.query<{
         player_id: number;

@@ -72,7 +72,8 @@ function presentState(game: Game, records: DartRecord[]) {
   return {
     ...presentGame(game),
     // The game was loaded before this dart: the status follows the darts.
-    status: winnerId !== null ? 'finished' : 'in_progress',
+    status:
+      game.status === 'abandoned' ? 'abandoned' : winnerId !== null ? 'finished' : 'in_progress',
     remaining,
     round: Math.floor(visitIndex / playerCount) + 1,
     currentPlayerId,
@@ -196,6 +197,25 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
     return game;
   }
 
+  const ABANDONED = { error: 'La partie a été abandonnée.' };
+
+  // The game to offer on opening the app: "Reprendre la partie" or "Abandonner".
+  app.get('/api/games/unfinished', async () => {
+    const game = await db.getUnfinishedGame();
+    return { game: game ? presentState(game, await db.listDarts(game.id)) : null };
+  });
+
+  app.post<{ Params: { id: string } }>('/api/games/:id/abandon', async (request, reply) => {
+    const game = await load(request.params.id);
+    if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
+    const records = await db.listDarts(game.id);
+    if (game.status === 'finished' || nextSlot(game, records).won) {
+      return reply.code(409).send({ error: 'La partie est terminée.' });
+    }
+    await db.abandonGame(game.id);
+    return presentState({ ...game, status: 'abandoned' }, records);
+  });
+
   app.get<{ Params: { id: string } }>('/api/games/:id', async (request, reply) => {
     const game = await load(request.params.id);
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
@@ -209,6 +229,7 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
       if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
       const dart = parseDart(request.body);
       if (!dart) return reply.code(400).send({ error: 'Fléchette invalide.' });
+      if (game.status === 'abandoned') return reply.code(409).send(ABANDONED);
       if (nextSlot(game, await db.listDarts(game.id)).won) {
         return reply.code(409).send({ error: 'La partie est terminée.' });
       }
@@ -220,6 +241,7 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Params: { id: string } }>('/api/games/:id/next', async (request, reply) => {
     const game = await load(request.params.id);
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
+    if (game.status === 'abandoned') return reply.code(409).send(ABANDONED);
     let records = await db.listDarts(game.id);
     if (nextSlot(game, records).won) {
       return reply.code(409).send({ error: 'La partie est terminée.' });
@@ -235,6 +257,7 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.delete<{ Params: { id: string } }>('/api/games/:id/darts/last', async (request, reply) => {
     const game = await load(request.params.id);
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
+    if (game.status === 'abandoned') return reply.code(409).send(ABANDONED);
     const records = await db.listDarts(game.id);
     if (records.length === 0) return presentState(game, records);
     await db.removeLastDart(game.id);

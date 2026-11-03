@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- Unfinished games: opening the app now offers **Reprendre la partie** (scores, player and current turn restored, on any device) or **Abandonner** (the game is kept but left out of statistics); see [Resuming or abandoning a game](docs/user/resume-game.md).
+
 - New game screen with a clickable dartboard: tap where each dart landed, miss, end a turn, undo as many times as needed, checkout hints, bust handling, and a winner window with **Rejouer**; every dart is saved as it is thrown; see [Playing a game](docs/user/playing.md).
 
 - New game setup screen (home page): choose 301 or 501, select the players, draw the play order at random and start the game; see [Starting a game](docs/user/new-game.md).
