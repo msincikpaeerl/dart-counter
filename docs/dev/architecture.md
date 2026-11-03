@@ -24,6 +24,7 @@ scoring rules   src/scoring/  (pure TypeScript, used by the server)
 - `src/server/db.ts` is the only code that talks to PostgreSQL. It also applies the schema migrations at startup (see [database](database.md)).
 - `src/scoring/` holds the X01 rules. It has no UI, server or database dependency; ESLint forbids those imports there.
 - Uploaded files (player photos) are written to `UPLOAD_DIR`, which is a Docker volume in production, and served under `/uploads/`.
+- Games: routes in `src/server/games.ts`. The browser never computes scores: each action is sent to the server, which stores the dart in `darts` and answers with the full game state computed by the scoring engine (`getGameView`, `suggestCheckout`). `GET /api/games/:id` (state), `POST /api/games/:id/darts` (`{sector, multiplier}`; a miss is `{sector: 0}`), `POST /api/games/:id/next` ("Joueur suivant": records misses for the darts left in the visit), `DELETE /api/games/:id/darts/last` (undo), `POST /api/games/:id/rematch` (same players and mode, new random order). The game page is `public/partie.html`, `partie.css`, `partie.js`.
 - Players: routes in `src/server/players.ts` (`/api/players`, create/edit with a multipart form, `/api/players/:id/archive`); photos are resized to 512 px by `src/server/photos.ts` with `sharp` ([ADR 0004](../adr/0004-player-photos-and-web-pages.md)).
 - Pages: plain HTML/CSS/JS in `public/` (copied into the Docker image), served under `/static/`; the players page is `/joueurs`.
 
