@@ -1,12 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { mkdir, readFile } from 'node:fs/promises';
+import { dirname, extname, join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
+import { fileURLToPath } from 'node:url';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { Database } from './db.js';
+import { registerPlayerRoutes } from './players.js';
+
+/** Static front-end files: src/server → ../../public, and the same from dist/server. */
+const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
 
 export interface AppOptions {
   db: Database;
@@ -21,6 +26,12 @@ export async function buildApp({ db, uploadDir }: AppOptions): Promise<FastifyIn
 
   await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
   await app.register(fastifyStatic, { root: uploadDir, prefix: '/uploads/' });
+  await app.register(fastifyStatic, {
+    root: PUBLIC_DIR,
+    prefix: '/static/',
+    decorateReply: false,
+    index: false,
+  });
 
   // Server-rendered page (French UI).
   app.get('/', async (_request, reply) => {
@@ -30,9 +41,16 @@ export async function buildApp({ db, uploadDir }: AppOptions): Promise<FastifyIn
         '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
           '<meta name="viewport" content="width=device-width, initial-scale=1">' +
           '<title>Dart Counter</title></head><body><h1>Dart Counter</h1>' +
-          '<p>Compteur de fléchettes.</p></body></html>',
+          '<p>Compteur de fléchettes.</p><p><a href="/joueurs">Joueurs</a></p></body></html>',
       );
   });
+
+  // Players screen (French UI); the page itself is a static file.
+  const playersPage = await readFile(join(PUBLIC_DIR, 'joueurs.html'), 'utf-8');
+  app.get('/joueurs', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(playersPage);
+  });
+  registerPlayerRoutes(app, db, uploadDir);
 
   // JSON API.
   app.get('/api/health', async (_request, reply) => {

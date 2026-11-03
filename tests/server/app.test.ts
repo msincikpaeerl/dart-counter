@@ -5,14 +5,10 @@ import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../../src/server/app.js';
 import type { Database } from '../../src/server/db.js';
+import { createMemoryDb } from './memory-db.js';
 
-const upDb: Database = { ping: async () => {}, close: async () => {} };
-const downDb: Database = {
-  ping: async () => {
-    throw new Error('down');
-  },
-  close: async () => {},
-};
+const upDb: Database = createMemoryDb();
+const downDb: Database = createMemoryDb({ down: true });
 
 describe('server', () => {
   let uploadDir: string;

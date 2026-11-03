@@ -5,3 +5,4 @@ Private web app (French UI) for scoring X01 darts games (301/501) at home on a p
 This guide explains how to use Dart Counter, organised by tasks. It is written for someone who never reads the code.
 
 - [Getting started](getting-started.md)
+- [Managing players](players.md)
