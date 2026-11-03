@@ -1,0 +1,2 @@
+# dart-counter
+Private web app (French UI) for scoring X01 darts games (301/501) at home on a phone or tablet. Saved players with photos, dart-by-dart scoring on a clickable board or keypad, checkout suggestions, resumable games and per-player statistics. Backend with PostgreSQL, delivered with Docker Compose, no authentication.
