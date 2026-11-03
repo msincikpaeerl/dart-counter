@@ -24,6 +24,8 @@ scoring rules   src/scoring/  (pure TypeScript, used by the server)
 - `src/server/db.ts` is the only code that talks to PostgreSQL. It also applies the schema migrations at startup (see [database](database.md)).
 - `src/scoring/` holds the X01 rules. It has no UI, server or database dependency; ESLint forbids those imports there.
 - Uploaded files (player photos) are written to `UPLOAD_DIR`, which is a Docker volume in production, and served under `/uploads/`.
+- Players: routes in `src/server/players.ts` (`/api/players`, create/edit with a multipart form, `/api/players/:id/archive`); photos are resized to 512 px by `src/server/photos.ts` with `sharp` ([ADR 0004](../adr/0004-player-photos-and-web-pages.md)).
+- Pages: plain HTML/CSS/JS in `public/` (copied into the Docker image), served under `/static/`; the players page is `/joueurs`.
 
 ## Testing
 
