@@ -9,7 +9,7 @@ Private web app (French UI) for scoring X01 darts games (301/501) at home on a p
 
 ## Current state
 
-Bootstrapped: TypeScript on Node 24, Fastify, PostgreSQL (see `docs/adr/0002-technology-stack.md`). Two services only: app + PostgreSQL. No product feature yet, only a health route, an upload route and a sample scoring module.
+Bootstrapped: TypeScript on Node 24, Fastify, PostgreSQL (see `docs/adr/0002-technology-stack.md`). Two services only: app + PostgreSQL. No product feature yet, only a health route, an upload route and a sample scoring module. The database schema (players, games, game_players, darts) is created by migrations applied at startup: see `docs/dev/database.md`; add schema changes as new entries in `src/server/migrations.ts`, never edit merged ones.
 
 ## Read before working
 
