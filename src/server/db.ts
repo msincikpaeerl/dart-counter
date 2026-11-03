@@ -32,6 +32,17 @@ export interface Game {
   players: Player[];
 }
 
+/** One dart as stored in the `darts` table. A miss is segment 0, multiplier 0, score 0. */
+export interface DartRecord {
+  playerId: number;
+  visitNumber: number;
+  dartNumber: number;
+  segment: number;
+  multiplier: number;
+  score: number;
+  bust: boolean;
+}
+
 /** The database access the app needs; tests can replace it with a stub. */
 export interface Database {
   /** Resolves when the database answers, rejects otherwise. */
@@ -52,6 +63,13 @@ export interface Database {
   /** Creates a game; `playerIds` is the play order. Players must exist. */
   createGame(mode: 301 | 501, playerIds: number[]): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
+  /** Darts of a game in throwing order. */
+  listDarts(gameId: number): Promise<DartRecord[]>;
+  addDart(gameId: number, dart: DartRecord): Promise<void>;
+  /** Deletes the last dart thrown (no-op when there is none). */
+  removeLastDart(gameId: number): Promise<void>;
+  /** Marks the game finished with this winner, or back in progress when `winnerId` is null. */
+  setWinner(gameId: number, winnerId: number | null): Promise<void>;
 }
 
 interface PlayerRow {
@@ -143,6 +161,63 @@ export function createDatabase(databaseUrl: string): Database {
       return game;
     },
     getGame: loadGame,
+    async listDarts(gameId) {
+      const result = await pool.query<{
+        player_id: number;
+        visit_number: number;
+        dart_number: number;
+        segment: number;
+        multiplier: number;
+        score: number;
+        bust: boolean;
+      }>(
+        `SELECT player_id::int AS player_id, visit_number, dart_number, segment, multiplier, score, bust
+         FROM darts WHERE game_id = $1 ORDER BY visit_number, dart_number`,
+        [gameId],
+      );
+      return result.rows.map((row) => ({
+        playerId: row.player_id,
+        visitNumber: row.visit_number,
+        dartNumber: row.dart_number,
+        segment: row.segment,
+        multiplier: row.multiplier,
+        score: row.score,
+        bust: row.bust,
+      }));
+    },
+    async addDart(gameId, dart) {
+      await pool.query(
+        `INSERT INTO darts (game_id, player_id, visit_number, dart_number, segment, multiplier, score, bust)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          gameId,
+          dart.playerId,
+          dart.visitNumber,
+          dart.dartNumber,
+          dart.segment,
+          dart.multiplier,
+          dart.score,
+          dart.bust,
+        ],
+      );
+    },
+    async removeLastDart(gameId) {
+      await pool.query(
+        `DELETE FROM darts WHERE id = (
+           SELECT id FROM darts WHERE game_id = $1
+           ORDER BY visit_number DESC, dart_number DESC LIMIT 1)`,
+        [gameId],
+      );
+    },
+    async setWinner(gameId, winnerId) {
+      await pool.query(
+        `UPDATE games SET winner_player_id = $2::bigint,
+           status = CASE WHEN $2::bigint IS NULL THEN 'in_progress' ELSE 'finished' END,
+           finished_at = CASE WHEN $2::bigint IS NULL THEN NULL ELSE now() END
+         WHERE id = $1`,
+        [gameId, winnerId],
+      );
+    },
     async close() {
       await pool.end();
     },

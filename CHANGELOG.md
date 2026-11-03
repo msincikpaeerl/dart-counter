@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- New game screen with a clickable dartboard: tap where each dart landed, miss, end a turn, undo as many times as needed, checkout hints, bust handling, and a winner window with **Rejouer**; every dart is saved as it is thrown; see [Playing a game](docs/user/playing.md).
+
 - New game setup screen (home page): choose 301 or 501, select the players, draw the play order at random and start the game; see [Starting a game](docs/user/new-game.md).
 - New **Joueurs** screen: create players (name, nickname, photo from the camera or the gallery), edit them and archive them; see [Managing players](docs/user/players.md).
 - The app can now be started with Docker Compose (app and database); see [Getting started](docs/user/getting-started.md).

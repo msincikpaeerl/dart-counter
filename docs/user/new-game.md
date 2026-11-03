@@ -24,4 +24,4 @@ If the game cannot be created (for example the network is down), a red message a
 
 ## The game page
 
-For now it shows the type of game and the order of play. Scoring the darts comes in a later version.
+It shows the game in progress: see [Playing a game](playing.md).

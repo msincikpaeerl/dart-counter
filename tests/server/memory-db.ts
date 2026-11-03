@@ -1,5 +1,6 @@
 import {
   DuplicatePlayerNameError,
+  type DartRecord,
   type Database,
   type Game,
   type Player,
@@ -18,6 +19,7 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
   }
 
   const games: Game[] = [];
+  const darts = new Map<number, DartRecord[]>();
 
   return {
     async createGame(mode, playerIds) {
@@ -37,6 +39,19 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     async getGame(id) {
       const found = games.find((g) => g.id === id);
       return found ? structuredClone(found) : null;
+    },
+    async listDarts(gameId) {
+      return structuredClone(darts.get(gameId) ?? []);
+    },
+    async addDart(gameId, dart) {
+      darts.set(gameId, [...(darts.get(gameId) ?? []), { ...dart }]);
+    },
+    async removeLastDart(gameId) {
+      darts.set(gameId, (darts.get(gameId) ?? []).slice(0, -1));
+    },
+    async setWinner(gameId, winnerId) {
+      const found = games.find((g) => g.id === gameId);
+      if (found) found.status = winnerId === null ? 'in_progress' : 'finished';
     },
     async ping() {
       if (options.down) throw new Error('down');
