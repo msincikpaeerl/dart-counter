@@ -26,7 +26,7 @@ The dart is saved on the server at once and the scores update. After three darts
 
 Each game is played with a _double out_: you must reach exactly 0 with a double (or the bull).
 
-- When your remaining score is 170 or less and a finish is possible with the darts you have left, a green **Finish** banner shows the darts to aim for, for example _T15 · D18_. The first target blinks on the board; the other targets have a white outline.
+- When your remaining score is 170 or less and a finish is possible with the darts you have left, a green **Finish** banner shows the darts to aim for, for example _T15 · D18_. The first target blinks on the board or on the keypad; the other targets have a white outline.
 - **Bust**: if a dart takes you below 0, leaves you on 1, or reaches 0 without a double, the whole turn scores nothing. Your score goes back to what it was at the start of the turn, a red message tells you so, and the turn passes to the next player.
 - When someone checks out, a **Game shot !** window shows the winner. Press **Rejouer** to start a new game with the same players and the same type of game (301 or 501). The order of play is drawn again at random.
 
@@ -36,6 +36,19 @@ Press **Annuler** to remove the last dart. You can press it as many times as you
 
 If you reload the page or come back to the game later, it is shown exactly where it stopped.
 
-## Not available yet
+## Entering darts with the keypad
 
-The keypad ("Pavé numérique") for entering scores by number is planned for a later version.
+Above the board, a switch lets you choose between **Cible** (the board) and **Pavé numérique** (the keypad). You can change at any time during a game: a dart scores exactly the same in both modes.
+
+On the keypad:
+
+1. Choose **Simple**, **Double** or **Triple** (Simple is selected by default). The number keys show what they will score, for example _D16_ or _T20_, and take a red tint for Double and a green tint for Triple.
+2. Press the number (1 to 20), or **25**, or **Bull · 50**.
+
+After each dart the choice goes back to Simple. Press Double or Triple a second time to cancel it. There is no triple 25 (the key is greyed out); **D25 = Bull** with Double selected is the same as **Bull · 50**.
+
+When a finish is suggested, the first target blinks on the keypad: the number key, and the Double or Triple button if one is needed (the **25** or **Bull · 50** key for the centre).
+
+## When no finish is shown
+
+No finish is suggested when your score is above 170, when it is a "bogey" number that cannot be checked out in three darts (such as 169 or 159), or when you do not have enough darts left in the turn. The banner then says so, or invites you to score.

@@ -77,13 +77,36 @@
 
       <div class="status" id="status" role="status"></div>
 
-      <div class="board-wrap">
-        <svg
-          id="board"
-          viewBox="-192 -192 384 384"
-          role="group"
-          aria-label="Cible : touchez une zone pour marquer"
-        ></svg>
+      <div class="input">
+        <div class="switch" role="group" aria-label="Mode de saisie">
+          <button type="button" id="view-board" aria-pressed="true">Cible</button>
+          <button type="button" id="view-pad" aria-pressed="false">Pavé numérique</button>
+        </div>
+
+        <div class="pad" id="pad" hidden>
+          <div class="pad-mods">
+            <button type="button" class="mod" data-mod="1" aria-pressed="true">Simple</button>
+            <button type="button" class="mod" data-mod="2" aria-pressed="false">Double</button>
+            <button type="button" class="mod" data-mod="3" aria-pressed="false">Triple</button>
+          </div>
+          <div class="pad-keys" id="pad-keys"></div>
+          <div class="pad-bulls">
+            <button type="button" class="key bull25" id="key-25">25</button>
+            <button type="button" class="key bull50" id="key-bull" aria-label="Bull 50">
+              Bull · 50
+            </button>
+          </div>
+        </div>
+
+        <div class="board-wrap" id="board-wrap">
+          <svg
+            id="board"
+            viewBox="-192 -192 384 384"
+            role="group"
+            aria-label="Cible : touchez une zone pour marquer"
+          ></svg>
+        </div>
+
         <div class="overlay" id="winner" role="dialog" aria-label="Fin de partie" hidden>
           <span class="shot">Game shot !</span>
           <span class="winner-name" id="winner-name"></span>
@@ -97,6 +120,7 @@
       </div>
     </main>
     <p id="error" class="load-error muted" role="status">Chargement…</p>
+    <script src="/static/keypad.js"></script>
     <script src="/static/partie.js"></script>
   </body>
 </html>
