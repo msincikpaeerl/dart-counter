@@ -86,6 +86,21 @@
       </div>
     </div>
 
+    <div id="resume-overlay" class="overlay" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="resume-title">
+        <div class="dialog-head">
+          <h2 id="resume-title">Partie en cours</h2>
+          <span id="resume-mode" class="draw-count"></span>
+        </div>
+        <p id="resume-summary" class="muted"></p>
+        <p id="resume-error" class="error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" id="abandon" class="btn-secondary">Abandonner</button>
+          <button type="button" id="resume" class="btn-primary">Reprendre la partie</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/menu.js"></script>
   </body>
 </html>

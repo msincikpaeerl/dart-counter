@@ -72,6 +72,10 @@ export interface Database {
   getGame(id: number): Promise<Game | null>;
   /** Finished games only (never abandoned or in progress), most recent first. */
   listFinishedGames(): Promise<FinishedGame[]>;
+  /** The most recently started game still in progress, or null. */
+  getUnfinishedGame(): Promise<Game | null>;
+  /** Closes a game in progress as abandoned (kept in the data, excluded from statistics). */
+  abandonGame(id: number): Promise<void>;
   /** Darts of a game in throwing order. */
   listDarts(gameId: number): Promise<DartRecord[]>;
   addDart(gameId: number, dart: DartRecord): Promise<void>;
@@ -193,6 +197,21 @@ export function createDatabase(databaseUrl: string): Database {
         });
       }
       return result;
+    },
+    async getUnfinishedGame() {
+      const result = await pool.query<{ id: number }>(
+        `SELECT id::int AS id FROM games WHERE status = 'in_progress'
+         ORDER BY started_at DESC, id DESC LIMIT 1`,
+      );
+      const row = result.rows[0];
+      return row ? loadGame(row.id) : null;
+    },
+    async abandonGame(id) {
+      await pool.query(
+        `UPDATE games SET status = 'abandoned', finished_at = now()
+         WHERE id = $1 AND status = 'in_progress'`,
+        [id],
+      );
     },
     async listDarts(gameId) {
       const result = await pool.query<{

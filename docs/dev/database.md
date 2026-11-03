@@ -18,6 +18,7 @@ Details worth knowing:
 - `visit_number` counts visits over the whole game (1, 2, 3, ...); each visit belongs to one player. Replaying a game means reading its darts ordered by `(visit_number, dart_number)`. `(game_id, visit_number, dart_number)` is unique.
 - A dart must belong to a player who is in the game (foreign key on `game_players`).
 - A winner can only be set on a `finished` game.
+- Abandoned games are kept (`status = 'abandoned'`) but must never count in statistics: every statistics query counts `status = 'finished'` games only. The unfinished game offered on opening the app is the latest `in_progress` one.
 
 ## Migrations
 

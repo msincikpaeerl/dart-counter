@@ -234,6 +234,60 @@
     loadPlayers();
   });
 
+  // ---------- Unfinished game: resume or abandon ----------
+
+  var unfinishedId = null;
+
+  function showUnfinished(game) {
+    unfinishedId = game.id;
+    $('resume-mode').textContent = String(game.mode);
+    $('resume-summary').textContent =
+      game.players
+        .map(function (p) {
+          return p.name + ' : ' + game.remaining[p.id];
+        })
+        .join(' · ') + '.';
+    $('resume-error').hidden = true;
+    $('resume-overlay').hidden = false;
+    $('resume').focus();
+  }
+
+  async function checkUnfinished() {
+    try {
+      var response = await fetch('/api/games/unfinished');
+      var body = await response.json();
+      if (body && body.game) showUnfinished(body.game);
+      else $('resume-overlay').hidden = true;
+    } catch {
+      // Offline: the setup screen stays usable.
+    }
+  }
+
+  $('resume').addEventListener('click', function () {
+    if (unfinishedId !== null) window.location.href = '/partie/' + unfinishedId;
+  });
+  $('abandon').addEventListener('click', async function () {
+    if (unfinishedId === null) return;
+    var button = $('abandon');
+    button.disabled = true;
+    try {
+      var response = await fetch('/api/games/' + unfinishedId + '/abandon', { method: 'POST' });
+      // 409: the game was finished elsewhere meanwhile; either way it is no longer pending.
+      if (response.ok || response.status === 409) {
+        unfinishedId = null;
+        $('resume-overlay').hidden = true;
+        button.disabled = false;
+        return;
+      }
+    } catch {
+      // handled below
+    }
+    $('resume-error').textContent = 'L’abandon a échoué. Réessayez.';
+    $('resume-error').hidden = false;
+    button.disabled = false;
+  });
+  window.addEventListener('pageshow', checkUnfinished);
+
   renderModes();
   renderCount();
 })();

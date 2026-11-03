@@ -73,12 +73,71 @@ describe('games API', () => {
     expect(list.json<{ id: number }[]>().map((p) => p.id)).toEqual([ids[0], ids[2]]);
   });
 
+  describe('unfinished game', () => {
+    const unfinished = async () =>
+      (await app.inject({ method: 'GET', url: '/api/games/unfinished' })).json<{
+        game: null | { id: number; status: string; remaining: Record<string, number> };
+      }>();
+
+    it('offers no game when none is in progress', async () => {
+      expect((await unfinished()).game).toBeNull();
+    });
+
+    it('returns the exact state of the game in progress', async () => {
+      const game = (await create({ mode: 301, playerIds: [ids[0], ids[1]] })).json<{
+        id: number;
+      }>();
+      const dart = (sector: number, multiplier: number) =>
+        app.inject({
+          method: 'POST',
+          url: `/api/games/${game.id}/darts`,
+          payload: { sector, multiplier },
+        });
+      await dart(20, 3);
+      await dart(19, 1);
+      await dart(5, 1);
+      await dart(20, 1);
+
+      const found = (await unfinished()).game;
+      expect(found?.id).toBe(game.id);
+      const full = await app.inject({ method: 'GET', url: `/api/games/${game.id}` });
+      expect(found).toEqual(full.json());
+      expect(found?.remaining[String(ids[0])]).toBe(217);
+      expect(found?.remaining[String(ids[1])]).toBe(281);
+    });
+
+    it('abandons a game: kept, flagged, no longer offered, no more darts', async () => {
+      const game = (await create({ mode: 501, playerIds: [ids[0]] })).json<{ id: number }>();
+      const response = await app.inject({ method: 'POST', url: `/api/games/${game.id}/abandon` });
+      expect(response.statusCode).toBe(200);
+      expect(response.json<{ status: string }>().status).toBe('abandoned');
+      expect((await db.getGame(game.id))?.status).toBe('abandoned');
+      expect((await unfinished()).game).toBeNull();
+      const late = await app.inject({
+        method: 'POST',
+        url: `/api/games/${game.id}/darts`,
+        payload: { sector: 20, multiplier: 1 },
+      });
+      expect(late.statusCode).toBe(409);
+      const read = await app.inject({ method: 'GET', url: `/api/games/${game.id}` });
+      expect(read.json<{ status: string }>().status).toBe('abandoned');
+    });
+
+    it('answers 404 when abandoning an unknown game', async () => {
+      expect((await app.inject({ method: 'POST', url: '/api/games/99/abandon' })).statusCode).toBe(
+        404,
+      );
+    });
+  });
+
   it('serves the setup page and the game page', async () => {
     const setup = await app.inject({ method: 'GET', url: '/' });
     expect(setup.body).toContain('Tirer au sort');
     expect(setup.body).toContain('Modifier la sélection');
     expect(setup.body).toContain('Relancer');
     expect(setup.body).toContain('C’est parti');
+    expect(setup.body).toContain('Reprendre la partie');
+    expect(setup.body).toContain('Abandonner');
     const game = await app.inject({ method: 'GET', url: '/partie/1' });
     expect(game.statusCode).toBe(200);
   });

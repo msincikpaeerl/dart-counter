@@ -7,9 +7,7 @@ import {
 } from '../../src/server/db.js';
 
 /** In-memory stand-in for the database, with the same player rules (unique name ignoring case). */
-export function createMemoryDb(
-  options: { down?: boolean } = {},
-): Database & { abandonGame(gameId: number): Promise<void> } {
+export function createMemoryDb(options: { down?: boolean } = {}): Database {
   const players: Player[] = [];
   let nextId = 1;
 
@@ -43,6 +41,14 @@ export function createMemoryDb(
       const found = games.find((g) => g.id === id);
       return found ? structuredClone(found) : null;
     },
+    async getUnfinishedGame() {
+      const found = [...games].reverse().find((g) => g.status === 'in_progress');
+      return found ? structuredClone(found) : null;
+    },
+    async abandonGame(id) {
+      const found = games.find((g) => g.id === id);
+      if (found && found.status === 'in_progress') found.status = 'abandoned';
+    },
     async listDarts(gameId) {
       return structuredClone(darts.get(gameId) ?? []);
     },
@@ -75,11 +81,6 @@ export function createMemoryDb(
           };
         })
         .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt));
-    },
-    /** Test helper: marks a game abandoned. */
-    async abandonGame(gameId: number) {
-      const found = games.find((g) => g.id === gameId);
-      if (found) found.status = 'abandoned';
     },
     async ping() {
       if (options.down) throw new Error('down');
