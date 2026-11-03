@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statistiques · Dart Counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/statistiques.css" />
+  </head>
+  <body>
+    <div class="screen">
+      <header class="top">
+        <button type="button" id="back" class="back" aria-label="Retour">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        <h1 id="title">Statistiques</h1>
+      </header>
+
+      <nav id="tabs" class="tabs" aria-label="Sections">
+        <button type="button" class="tab" id="tab-players" aria-pressed="true">Joueurs</button>
+        <button type="button" class="tab" id="tab-history" aria-pressed="false">Historique</button>
+      </nav>
+
+      <main class="main">
+        <p id="message" class="muted" hidden></p>
+
+        <!-- Liste des joueurs -->
+        <ul id="players" class="rows"></ul>
+
+        <!-- Statistiques d'un joueur -->
+        <section id="player-view" hidden>
+          <div class="player-head">
+            <div id="player-avatar"></div>
+            <div class="player-names">
+              <div id="player-name" class="player-name"></div>
+              <div id="player-nickname" class="player-nickname"></div>
+              <div id="player-archived" class="badge" hidden>Archivé</div>
+            </div>
+          </div>
+          <dl id="stat-grid" class="stat-grid"></dl>
+          <h2 class="section-title">Parties de ce joueur</h2>
+        </section>
+
+        <!-- Liste des parties -->
+        <ul id="games" class="rows"></ul>
+
+        <!-- Détail d'une partie -->
+        <section id="game-view" hidden>
+          <div id="game-summary" class="game-summary"></div>
+          <ol id="visits" class="visits"></ol>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/statistiques.js"></script>
+  </body>
+</html>

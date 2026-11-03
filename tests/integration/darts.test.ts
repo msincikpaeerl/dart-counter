@@ -45,4 +45,23 @@ describe.skipIf(!databaseUrl)('darts (PostgreSQL)', () => {
     await db.setWinner(game.id, null);
     expect((await db.getGame(game.id))?.status).toBe('in_progress');
   });
+
+  it('lists only finished games, keeping archived players', async () => {
+    const player = await db.createPlayer({
+      name: `Finished-${randomUUID()}`,
+      nickname: null,
+      photoPath: null,
+    });
+    const finished = await db.createGame(301, [player.id]);
+    const unfinished = await db.createGame(501, [player.id]);
+    await db.setWinner(finished.id, player.id);
+    await db.archivePlayer(player.id);
+
+    const games = await db.listFinishedGames();
+    const found = games.find((game) => game.id === finished.id);
+    expect(found?.winnerId).toBe(player.id);
+    expect(found?.players[0]?.archived).toBe(true);
+    expect(Number.isNaN(Date.parse(found?.finishedAt ?? ''))).toBe(false);
+    expect(games.some((game) => game.id === unfinished.id)).toBe(false);
+  });
 });

@@ -10,6 +10,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { Database } from './db.js';
 import { registerGameRoutes } from './games.js';
 import { registerPlayerRoutes } from './players.js';
+import { registerStatsRoutes } from './stats.js';
 
 /** Static front-end files: src/server → ../../public, and the same from dist/server. */
 const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public');
@@ -51,6 +52,13 @@ export async function buildApp({ db, uploadDir }: AppOptions): Promise<FastifyIn
     return reply.type('text/html; charset=utf-8').send(playersPage);
   });
   registerPlayerRoutes(app, db, uploadDir);
+
+  // Statistics and history screen (French UI), and its API.
+  const statsPage = await readFile(join(PUBLIC_DIR, 'statistiques.html'), 'utf-8');
+  app.get('/statistiques', async (_request, reply) => {
+    return reply.type('text/html; charset=utf-8').send(statsPage);
+  });
+  registerStatsRoutes(app, db);
 
   // JSON API.
   app.get('/api/health', async (_request, reply) => {

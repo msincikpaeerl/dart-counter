@@ -8,3 +8,4 @@ This guide explains how to use Dart Counter, organised by tasks. It is written f
 - [Starting a game](new-game.md)
 - [Playing a game](playing.md)
 - [Managing players](players.md)
+- [Statistics and game history](statistics.md)

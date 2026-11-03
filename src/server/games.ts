@@ -23,13 +23,13 @@ function presentGame(game: Game) {
 }
 
 /** A stored dart as the scoring engine sees it (a miss is sector 0, multiplier 1). */
-function toEngineDart(record: Pick<DartRecord, 'segment' | 'multiplier'>): Dart {
+export function toEngineDart(record: Pick<DartRecord, 'segment' | 'multiplier'>): Dart {
   return record.segment === 0
     ? { sector: 0, multiplier: 1 }
     : { sector: record.segment, multiplier: record.multiplier as 1 | 2 | 3 };
 }
 
-function dartLabel(dart: Dart): string {
+export function dartLabel(dart: Dart): string {
   return dart.sector === 0 ? '0' : formatDart(dart);
 }
 

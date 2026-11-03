@@ -32,6 +32,13 @@ export interface Game {
   players: Player[];
 }
 
+/** A finished game: archived players are kept in `players`. Dates are ISO 8601 strings. */
+export interface FinishedGame extends Game {
+  winnerId: number | null;
+  startedAt: string;
+  finishedAt: string;
+}
+
 /** One dart as stored in the `darts` table. A miss is segment 0, multiplier 0, score 0. */
 export interface DartRecord {
   playerId: number;
@@ -63,6 +70,8 @@ export interface Database {
   /** Creates a game; `playerIds` is the play order. Players must exist. */
   createGame(mode: 301 | 501, playerIds: number[]): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
+  /** Finished games only (never abandoned or in progress), most recent first. */
+  listFinishedGames(): Promise<FinishedGame[]>;
   /** Darts of a game in throwing order. */
   listDarts(gameId: number): Promise<DartRecord[]>;
   addDart(gameId: number, dart: DartRecord): Promise<void>;
@@ -161,6 +170,30 @@ export function createDatabase(databaseUrl: string): Database {
       return game;
     },
     getGame: loadGame,
+    async listFinishedGames() {
+      const games = await pool.query<{
+        id: number;
+        mode: number;
+        winner_player_id: number | null;
+        started_at: Date;
+        finished_at: Date | null;
+      }>(
+        `SELECT id::int AS id, mode, winner_player_id::int AS winner_player_id, started_at, finished_at
+         FROM games WHERE status = 'finished' ORDER BY finished_at DESC NULLS LAST, id DESC`,
+      );
+      const result: FinishedGame[] = [];
+      for (const row of games.rows) {
+        const game = await loadGame(row.id);
+        if (!game) continue;
+        result.push({
+          ...game,
+          winnerId: row.winner_player_id,
+          startedAt: row.started_at.toISOString(),
+          finishedAt: (row.finished_at ?? row.started_at).toISOString(),
+        });
+      }
+      return result;
+    },
     async listDarts(gameId) {
       const result = await pool.query<{
         player_id: number;
