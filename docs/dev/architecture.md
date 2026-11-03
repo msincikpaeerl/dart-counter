@@ -25,6 +25,16 @@ scoring rules   src/scoring/  (pure TypeScript, used by the server)
 - `src/scoring/` holds the X01 rules. It has no UI, server or database dependency; ESLint forbids those imports there.
 - Uploaded files (player photos) are written to `UPLOAD_DIR`, which is a Docker volume in production, and served under `/uploads/`.
 
+## Scoring module
+
+`src/scoring/` exposes (through `index.ts`):
+
+- `applyTurn`, `dartValue`: score one visit of up to three darts.
+- `createGame`, `throwDart`, `undoDart`, `getGameView`: a game is its configuration plus the list of darts thrown. `getGameView` replays the darts to give each player's remaining score, the visits, whose turn it is, the darts left in the visit and the winner. Undo simply removes the last dart, so it works across visits and undoes a bust or a win.
+- `suggestCheckout(remaining, dartsLeft)`: a finish for 170 or less, using the fewest darts, preferring D20, D16, D8 and avoiding the bull unless needed. It returns `null` above 170, for bogey numbers (169, 168, 166, 165, 163, 162, 159) and when the darts left are too few. `formatDart` gives labels such as `T20`, `D16`, `Bull`.
+
+Rules: 3 darts per visit, single in, double out (the bull counts as a double). A visit is a bust when the score goes below 0, leaves 1, or reaches 0 without a double; a bust scores 0, restores the score and passes the turn at once.
+
 ## Testing
 
 Where each kind of test runs is described in [testing](testing.md). Tests that need PostgreSQL run in CI only.
