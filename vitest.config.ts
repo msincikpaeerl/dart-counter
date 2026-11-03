@@ -14,6 +14,8 @@ export default defineConfig({
           name: 'integration',
           include: ['tests/integration/**/*.test.ts'],
           testTimeout: 20000,
+          // Files share one database and migrations.test.ts recreates its schema.
+          fileParallelism: false,
         },
       },
     ],
