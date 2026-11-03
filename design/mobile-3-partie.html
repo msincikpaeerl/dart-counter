@@ -1,0 +1,2108 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Partie en cours · Dart Counter (maquette)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        background: #0e0e0e;
+      }
+      a {
+        color: #efdcb0;
+      }
+      a:hover {
+        color: #ffffff;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      .seg {
+        cursor: pointer;
+        transition: filter 0.12s;
+      }
+      .seg:hover {
+        filter: brightness(1.3);
+      }
+      .seg:active {
+        filter: brightness(1.6);
+      }
+      .tgt {
+        stroke: #ffffff;
+        stroke-width: 2;
+      }
+      .blink {
+        stroke: #ffffff;
+        stroke-width: 2.5;
+        animation: blink 0.9s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+        }
+        50% {
+          fill: #ffffff;
+        }
+      }
+      .chipnext {
+        animation: chip 0.9s ease-in-out infinite;
+      }
+      @keyframes chip {
+        0%,
+        100% {
+          background: #efdcb0;
+        }
+        50% {
+          background: #ffffff;
+        }
+      }
+      .padnext {
+        animation: padb 0.9s ease-in-out infinite;
+      }
+      @keyframes padb {
+        0%,
+        100% {
+          box-shadow: 0 0 0 2px #efdcb0;
+        }
+        50% {
+          box-shadow: 0 0 0 3px #ffffff;
+          background: #efdcb0;
+          color: #111111;
+        }
+      }
+      button:disabled {
+        cursor: not-allowed;
+      }
+    </style>
+    <style>
+      #app {
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Maquette Dart Counter : référence visuelle et comportementale, pas du code de production. -->
+    <div id="app"></div>
+    <template id="tpl">
+      <div
+        style="
+          width: 390px;
+          height: 844px;
+          box-sizing: border-box;
+          background: #0e0e0e;
+          color: #f4f1ea;
+          font-family: Barlow, sans-serif;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 0 14px 20px;
+          overflow: hidden;
+        "
+      >
+        <header style="display: flex; align-items: center; gap: 6px; padding-top: 20px">
+          <a
+            href="mobile-1-menu.html"
+            aria-label="Quitter la partie"
+            style="
+              width: 44px;
+              height: 44px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 22px;
+              color: #efdcb0;
+            "
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 5l-7 7 7 7"></path>
+            </svg>
+          </a>
+          <div style="flex: 1; display: flex; flex-direction: column">
+            <span
+              style="
+                font-family: 'Barlow Condensed', sans-serif;
+                font-weight: 800;
+                font-size: 22px;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                color: #efdcb0;
+                line-height: 1.1;
+              "
+              >{{mode}} · Double out</span
+            >
+            <span style="font-size: 13px; color: #9a9a9a; font-weight: 600">Manche {{round}}</span>
+          </div>
+          <button
+            type="button"
+            onClick="{{undo}}"
+            aria-label="Annuler la dernière fléchette"
+            style="
+              height: 44px;
+              padding: 0 14px;
+              border-radius: 22px;
+              background: #1b1b1b;
+              border: 1px solid #333333;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              color: #efdcb0;
+              font-weight: 600;
+              font-size: 15px;
+            "
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 14L4 9l5-5"></path>
+              <path d="M4 9h11a5 5 0 0 1 0 10h-3"></path>
+            </svg>
+            Annuler
+          </button>
+        </header>
+
+        <section
+          aria-label="Joueur en cours"
+          style="
+            background: #181818;
+            border: 2px solid #d9261c;
+            border-radius: 18px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="{{curAvatar}}">{{curIni}}</span>
+            <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+              <span
+                style="
+                  font-size: 12px;
+                  font-weight: 700;
+                  letter-spacing: 0.12em;
+                  text-transform: uppercase;
+                  color: #ff5a4e;
+                "
+                >À toi de jouer</span
+              >
+              <span style="font-size: 22px; font-weight: 700; line-height: 1.15">{{curName}}</span>
+            </div>
+            <span
+              style="
+                font-family: 'Barlow Condensed', sans-serif;
+                font-weight: 800;
+                font-size: 72px;
+                line-height: 0.9;
+                color: #efdcb0;
+                font-variant-numeric: tabular-nums;
+              "
+              >{{remaining}}</span
+            >
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <sc-for list="{{slots}}" as="s" hint-placeholder-count="3">
+              <span style="{{s.style}}">{{s.label}}</span>
+            </sc-for>
+            <span
+              style="
+                margin-left: auto;
+                font-family: 'Barlow Condensed', sans-serif;
+                font-weight: 700;
+                font-size: 22px;
+                color: #9a9a9a;
+                white-space: nowrap;
+              "
+              >= {{turnTotal}}</span
+            >
+          </div>
+        </section>
+
+        <section
+          aria-label="Autres joueurs"
+          style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"
+        >
+          <sc-for list="{{others}}" as="o" hint-placeholder-count="2">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: #161616;
+                border: 1px solid #262626;
+                border-radius: 14px;
+                padding: 8px 10px;
+                min-width: 0;
+              "
+            >
+              <span style="{{o.avatar}}">{{o.ini}}</span>
+              <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+                <span
+                  style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                  "
+                  >{{o.name}}</span
+                >
+                <span style="font-size: 12px; color: #9a9a9a">Dern. {{o.last}}</span>
+              </div>
+              <span
+                style="
+                  font-family: 'Barlow Condensed', sans-serif;
+                  font-weight: 800;
+                  font-size: 30px;
+                  color: #f4f1ea;
+                  font-variant-numeric: tabular-nums;
+                "
+                >{{o.score}}</span
+              >
+            </div>
+          </sc-for>
+        </section>
+
+        <div style="min-height: 52px; display: flex">
+          <sc-if value="{{showCheckout}}" hint-placeholder-val="{{true}}">
+            <div
+              role="status"
+              style="
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: #10301c;
+                border: 2px solid #0b8a3c;
+                border-radius: 14px;
+                padding: 6px 12px;
+              "
+            >
+              <span
+                style="
+                  font-family: 'Barlow Condensed', sans-serif;
+                  font-weight: 800;
+                  font-size: 18px;
+                  letter-spacing: 0.1em;
+                  text-transform: uppercase;
+                  color: #7fe0a3;
+                "
+                >Finish</span
+              >
+              <div style="flex: 1; display: flex; gap: 6px; justify-content: flex-end">
+                <sc-for list="{{combo}}" as="k" hint-placeholder-count="2">
+                  <span class="{{k.cls}}" style="{{k.style}}">{{k.label}}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{showMsg}}" hint-placeholder-val="{{false}}">
+            <div
+              role="status"
+              style="
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #3a0f0c;
+                border: 2px solid #d9261c;
+                border-radius: 14px;
+                padding: 6px 12px;
+                font-weight: 700;
+                font-size: 17px;
+                color: #ffd9d6;
+              "
+            >
+              {{msg}}
+            </div>
+          </sc-if>
+          <sc-if value="{{showHint}}" hint-placeholder-val="{{false}}">
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px dashed #333333;
+                border-radius: 14px;
+                font-size: 15px;
+                color: #9a9a9a;
+              "
+            >
+              {{hint}}
+            </div>
+          </sc-if>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Mode de saisie"
+          style="
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 4px;
+            padding: 4px;
+            background: #181818;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+          "
+        >
+          <sc-for list="{{views}}" as="v" hint-placeholder-count="2">
+            <button
+              type="button"
+              aria-pressed="{{v.pressed}}"
+              onClick="{{v.pick}}"
+              style="{{v.style}}"
+            >
+              {{v.label}}
+            </button>
+          </sc-for>
+        </div>
+
+        <div
+          style="
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+          "
+        >
+          <sc-if value="{{showPad}}" hint-placeholder-val="{{false}}">
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 8px">
+              <div
+                style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px"
+              >
+                <sc-for list="{{mods}}" as="m" hint-placeholder-count="3">
+                  <button
+                    type="button"
+                    aria-pressed="{{m.pressed}}"
+                    onClick="{{m.pick}}"
+                    class="{{m.cls}}"
+                    style="{{m.style}}"
+                  >
+                    {{m.label}}
+                  </button>
+                </sc-for>
+              </div>
+              <div
+                style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px"
+              >
+                <sc-for list="{{keys}}" as="k" hint-placeholder-count="20">
+                  <button
+                    type="button"
+                    onClick="{{k.press}}"
+                    class="{{k.cls}}"
+                    aria-label="{{k.aria}}"
+                    style="{{k.style}}"
+                  >
+                    {{k.label}}
+                  </button>
+                </sc-for>
+              </div>
+              <div
+                style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"
+              >
+                <sc-for list="{{bulls}}" as="k" hint-placeholder-count="2">
+                  <button
+                    type="button"
+                    onClick="{{k.press}}"
+                    disabled="{{k.disabled}}"
+                    class="{{k.cls}}"
+                    aria-label="{{k.aria}}"
+                    style="{{k.style}}"
+                  >
+                    {{k.label}}
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{showBoard}}" hint-placeholder-val="{{true}}">
+            <svg
+              width="330"
+              height="330"
+              viewBox="-192 -192 384 384"
+              role="group"
+              aria-label="Cible : touchez une zone pour marquer"
+            >
+              <circle r="192" fill="#111111" stroke="#3A3A3A" stroke-width="2"></circle>
+              <path
+                d="M-3.91 -24.69 L-15.02 -94.82 A96 96 0 0 1 15.02 -94.82 L3.91 -24.69 A25 25 0 0 0 -3.91 -24.69Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s20i}}"
+                onClick="{{h.s20i}}"
+                aria-label="Simple 20"
+              ></path>
+              <path
+                d="M-15.02 -94.82 L-18.46 -116.55 A118 118 0 0 1 18.46 -116.55 L15.02 -94.82 A96 96 0 0 0 -15.02 -94.82Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t20}}"
+                onClick="{{h.t20}}"
+                aria-label="Triple 20"
+              ></path>
+              <path
+                d="M-18.46 -116.55 L-22.84 -144.20 A146 146 0 0 1 22.84 -144.20 L18.46 -116.55 A118 118 0 0 0 -18.46 -116.55Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s20o}}"
+                onClick="{{h.s20o}}"
+                aria-label="Simple 20"
+              ></path>
+              <path
+                d="M-22.84 -144.20 L-26.28 -165.93 A168 168 0 0 1 26.28 -165.93 L22.84 -144.20 A146 146 0 0 0 -22.84 -144.20Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d20}}"
+                onClick="{{h.d20}}"
+                aria-label="Double 20"
+              ></path>
+              <path
+                d="M3.91 -24.69 L15.02 -94.82 A96 96 0 0 1 43.58 -85.54 L11.35 -22.28 A25 25 0 0 0 3.91 -24.69Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s1i}}"
+                onClick="{{h.s1i}}"
+                aria-label="Simple 1"
+              ></path>
+              <path
+                d="M15.02 -94.82 L18.46 -116.55 A118 118 0 0 1 53.57 -105.14 L43.58 -85.54 A96 96 0 0 0 15.02 -94.82Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t1}}"
+                onClick="{{h.t1}}"
+                aria-label="Triple 1"
+              ></path>
+              <path
+                d="M18.46 -116.55 L22.84 -144.20 A146 146 0 0 1 66.28 -130.09 L53.57 -105.14 A118 118 0 0 0 18.46 -116.55Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s1o}}"
+                onClick="{{h.s1o}}"
+                aria-label="Simple 1"
+              ></path>
+              <path
+                d="M22.84 -144.20 L26.28 -165.93 A168 168 0 0 1 76.27 -149.69 L66.28 -130.09 A146 146 0 0 0 22.84 -144.20Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d1}}"
+                onClick="{{h.d1}}"
+                aria-label="Double 1"
+              ></path>
+              <path
+                d="M11.35 -22.28 L43.58 -85.54 A96 96 0 0 1 67.88 -67.88 L17.68 -17.68 A25 25 0 0 0 11.35 -22.28Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s18i}}"
+                onClick="{{h.s18i}}"
+                aria-label="Simple 18"
+              ></path>
+              <path
+                d="M43.58 -85.54 L53.57 -105.14 A118 118 0 0 1 83.44 -83.44 L67.88 -67.88 A96 96 0 0 0 43.58 -85.54Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t18}}"
+                onClick="{{h.t18}}"
+                aria-label="Triple 18"
+              ></path>
+              <path
+                d="M53.57 -105.14 L66.28 -130.09 A146 146 0 0 1 103.24 -103.24 L83.44 -83.44 A118 118 0 0 0 53.57 -105.14Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s18o}}"
+                onClick="{{h.s18o}}"
+                aria-label="Simple 18"
+              ></path>
+              <path
+                d="M66.28 -130.09 L76.27 -149.69 A168 168 0 0 1 118.79 -118.79 L103.24 -103.24 A146 146 0 0 0 66.28 -130.09Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d18}}"
+                onClick="{{h.d18}}"
+                aria-label="Double 18"
+              ></path>
+              <path
+                d="M17.68 -17.68 L67.88 -67.88 A96 96 0 0 1 85.54 -43.58 L22.28 -11.35 A25 25 0 0 0 17.68 -17.68Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s4i}}"
+                onClick="{{h.s4i}}"
+                aria-label="Simple 4"
+              ></path>
+              <path
+                d="M67.88 -67.88 L83.44 -83.44 A118 118 0 0 1 105.14 -53.57 L85.54 -43.58 A96 96 0 0 0 67.88 -67.88Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t4}}"
+                onClick="{{h.t4}}"
+                aria-label="Triple 4"
+              ></path>
+              <path
+                d="M83.44 -83.44 L103.24 -103.24 A146 146 0 0 1 130.09 -66.28 L105.14 -53.57 A118 118 0 0 0 83.44 -83.44Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s4o}}"
+                onClick="{{h.s4o}}"
+                aria-label="Simple 4"
+              ></path>
+              <path
+                d="M103.24 -103.24 L118.79 -118.79 A168 168 0 0 1 149.69 -76.27 L130.09 -66.28 A146 146 0 0 0 103.24 -103.24Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d4}}"
+                onClick="{{h.d4}}"
+                aria-label="Double 4"
+              ></path>
+              <path
+                d="M22.28 -11.35 L85.54 -43.58 A96 96 0 0 1 94.82 -15.02 L24.69 -3.91 A25 25 0 0 0 22.28 -11.35Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s13i}}"
+                onClick="{{h.s13i}}"
+                aria-label="Simple 13"
+              ></path>
+              <path
+                d="M85.54 -43.58 L105.14 -53.57 A118 118 0 0 1 116.55 -18.46 L94.82 -15.02 A96 96 0 0 0 85.54 -43.58Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t13}}"
+                onClick="{{h.t13}}"
+                aria-label="Triple 13"
+              ></path>
+              <path
+                d="M105.14 -53.57 L130.09 -66.28 A146 146 0 0 1 144.20 -22.84 L116.55 -18.46 A118 118 0 0 0 105.14 -53.57Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s13o}}"
+                onClick="{{h.s13o}}"
+                aria-label="Simple 13"
+              ></path>
+              <path
+                d="M130.09 -66.28 L149.69 -76.27 A168 168 0 0 1 165.93 -26.28 L144.20 -22.84 A146 146 0 0 0 130.09 -66.28Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d13}}"
+                onClick="{{h.d13}}"
+                aria-label="Double 13"
+              ></path>
+              <path
+                d="M24.69 -3.91 L94.82 -15.02 A96 96 0 0 1 94.82 15.02 L24.69 3.91 A25 25 0 0 0 24.69 -3.91Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s6i}}"
+                onClick="{{h.s6i}}"
+                aria-label="Simple 6"
+              ></path>
+              <path
+                d="M94.82 -15.02 L116.55 -18.46 A118 118 0 0 1 116.55 18.46 L94.82 15.02 A96 96 0 0 0 94.82 -15.02Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t6}}"
+                onClick="{{h.t6}}"
+                aria-label="Triple 6"
+              ></path>
+              <path
+                d="M116.55 -18.46 L144.20 -22.84 A146 146 0 0 1 144.20 22.84 L116.55 18.46 A118 118 0 0 0 116.55 -18.46Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s6o}}"
+                onClick="{{h.s6o}}"
+                aria-label="Simple 6"
+              ></path>
+              <path
+                d="M144.20 -22.84 L165.93 -26.28 A168 168 0 0 1 165.93 26.28 L144.20 22.84 A146 146 0 0 0 144.20 -22.84Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d6}}"
+                onClick="{{h.d6}}"
+                aria-label="Double 6"
+              ></path>
+              <path
+                d="M24.69 3.91 L94.82 15.02 A96 96 0 0 1 85.54 43.58 L22.28 11.35 A25 25 0 0 0 24.69 3.91Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s10i}}"
+                onClick="{{h.s10i}}"
+                aria-label="Simple 10"
+              ></path>
+              <path
+                d="M94.82 15.02 L116.55 18.46 A118 118 0 0 1 105.14 53.57 L85.54 43.58 A96 96 0 0 0 94.82 15.02Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t10}}"
+                onClick="{{h.t10}}"
+                aria-label="Triple 10"
+              ></path>
+              <path
+                d="M116.55 18.46 L144.20 22.84 A146 146 0 0 1 130.09 66.28 L105.14 53.57 A118 118 0 0 0 116.55 18.46Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s10o}}"
+                onClick="{{h.s10o}}"
+                aria-label="Simple 10"
+              ></path>
+              <path
+                d="M144.20 22.84 L165.93 26.28 A168 168 0 0 1 149.69 76.27 L130.09 66.28 A146 146 0 0 0 144.20 22.84Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d10}}"
+                onClick="{{h.d10}}"
+                aria-label="Double 10"
+              ></path>
+              <path
+                d="M22.28 11.35 L85.54 43.58 A96 96 0 0 1 67.88 67.88 L17.68 17.68 A25 25 0 0 0 22.28 11.35Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s15i}}"
+                onClick="{{h.s15i}}"
+                aria-label="Simple 15"
+              ></path>
+              <path
+                d="M85.54 43.58 L105.14 53.57 A118 118 0 0 1 83.44 83.44 L67.88 67.88 A96 96 0 0 0 85.54 43.58Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t15}}"
+                onClick="{{h.t15}}"
+                aria-label="Triple 15"
+              ></path>
+              <path
+                d="M105.14 53.57 L130.09 66.28 A146 146 0 0 1 103.24 103.24 L83.44 83.44 A118 118 0 0 0 105.14 53.57Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s15o}}"
+                onClick="{{h.s15o}}"
+                aria-label="Simple 15"
+              ></path>
+              <path
+                d="M130.09 66.28 L149.69 76.27 A168 168 0 0 1 118.79 118.79 L103.24 103.24 A146 146 0 0 0 130.09 66.28Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d15}}"
+                onClick="{{h.d15}}"
+                aria-label="Double 15"
+              ></path>
+              <path
+                d="M17.68 17.68 L67.88 67.88 A96 96 0 0 1 43.58 85.54 L11.35 22.28 A25 25 0 0 0 17.68 17.68Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s2i}}"
+                onClick="{{h.s2i}}"
+                aria-label="Simple 2"
+              ></path>
+              <path
+                d="M67.88 67.88 L83.44 83.44 A118 118 0 0 1 53.57 105.14 L43.58 85.54 A96 96 0 0 0 67.88 67.88Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t2}}"
+                onClick="{{h.t2}}"
+                aria-label="Triple 2"
+              ></path>
+              <path
+                d="M83.44 83.44 L103.24 103.24 A146 146 0 0 1 66.28 130.09 L53.57 105.14 A118 118 0 0 0 83.44 83.44Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s2o}}"
+                onClick="{{h.s2o}}"
+                aria-label="Simple 2"
+              ></path>
+              <path
+                d="M103.24 103.24 L118.79 118.79 A168 168 0 0 1 76.27 149.69 L66.28 130.09 A146 146 0 0 0 103.24 103.24Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d2}}"
+                onClick="{{h.d2}}"
+                aria-label="Double 2"
+              ></path>
+              <path
+                d="M11.35 22.28 L43.58 85.54 A96 96 0 0 1 15.02 94.82 L3.91 24.69 A25 25 0 0 0 11.35 22.28Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s17i}}"
+                onClick="{{h.s17i}}"
+                aria-label="Simple 17"
+              ></path>
+              <path
+                d="M43.58 85.54 L53.57 105.14 A118 118 0 0 1 18.46 116.55 L15.02 94.82 A96 96 0 0 0 43.58 85.54Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t17}}"
+                onClick="{{h.t17}}"
+                aria-label="Triple 17"
+              ></path>
+              <path
+                d="M53.57 105.14 L66.28 130.09 A146 146 0 0 1 22.84 144.20 L18.46 116.55 A118 118 0 0 0 53.57 105.14Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s17o}}"
+                onClick="{{h.s17o}}"
+                aria-label="Simple 17"
+              ></path>
+              <path
+                d="M66.28 130.09 L76.27 149.69 A168 168 0 0 1 26.28 165.93 L22.84 144.20 A146 146 0 0 0 66.28 130.09Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d17}}"
+                onClick="{{h.d17}}"
+                aria-label="Double 17"
+              ></path>
+              <path
+                d="M3.91 24.69 L15.02 94.82 A96 96 0 0 1 -15.02 94.82 L-3.91 24.69 A25 25 0 0 0 3.91 24.69Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s3i}}"
+                onClick="{{h.s3i}}"
+                aria-label="Simple 3"
+              ></path>
+              <path
+                d="M15.02 94.82 L18.46 116.55 A118 118 0 0 1 -18.46 116.55 L-15.02 94.82 A96 96 0 0 0 15.02 94.82Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t3}}"
+                onClick="{{h.t3}}"
+                aria-label="Triple 3"
+              ></path>
+              <path
+                d="M18.46 116.55 L22.84 144.20 A146 146 0 0 1 -22.84 144.20 L-18.46 116.55 A118 118 0 0 0 18.46 116.55Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s3o}}"
+                onClick="{{h.s3o}}"
+                aria-label="Simple 3"
+              ></path>
+              <path
+                d="M22.84 144.20 L26.28 165.93 A168 168 0 0 1 -26.28 165.93 L-22.84 144.20 A146 146 0 0 0 22.84 144.20Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d3}}"
+                onClick="{{h.d3}}"
+                aria-label="Double 3"
+              ></path>
+              <path
+                d="M-3.91 24.69 L-15.02 94.82 A96 96 0 0 1 -43.58 85.54 L-11.35 22.28 A25 25 0 0 0 -3.91 24.69Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s19i}}"
+                onClick="{{h.s19i}}"
+                aria-label="Simple 19"
+              ></path>
+              <path
+                d="M-15.02 94.82 L-18.46 116.55 A118 118 0 0 1 -53.57 105.14 L-43.58 85.54 A96 96 0 0 0 -15.02 94.82Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t19}}"
+                onClick="{{h.t19}}"
+                aria-label="Triple 19"
+              ></path>
+              <path
+                d="M-18.46 116.55 L-22.84 144.20 A146 146 0 0 1 -66.28 130.09 L-53.57 105.14 A118 118 0 0 0 -18.46 116.55Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s19o}}"
+                onClick="{{h.s19o}}"
+                aria-label="Simple 19"
+              ></path>
+              <path
+                d="M-22.84 144.20 L-26.28 165.93 A168 168 0 0 1 -76.27 149.69 L-66.28 130.09 A146 146 0 0 0 -22.84 144.20Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d19}}"
+                onClick="{{h.d19}}"
+                aria-label="Double 19"
+              ></path>
+              <path
+                d="M-11.35 22.28 L-43.58 85.54 A96 96 0 0 1 -67.88 67.88 L-17.68 17.68 A25 25 0 0 0 -11.35 22.28Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s7i}}"
+                onClick="{{h.s7i}}"
+                aria-label="Simple 7"
+              ></path>
+              <path
+                d="M-43.58 85.54 L-53.57 105.14 A118 118 0 0 1 -83.44 83.44 L-67.88 67.88 A96 96 0 0 0 -43.58 85.54Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t7}}"
+                onClick="{{h.t7}}"
+                aria-label="Triple 7"
+              ></path>
+              <path
+                d="M-53.57 105.14 L-66.28 130.09 A146 146 0 0 1 -103.24 103.24 L-83.44 83.44 A118 118 0 0 0 -53.57 105.14Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s7o}}"
+                onClick="{{h.s7o}}"
+                aria-label="Simple 7"
+              ></path>
+              <path
+                d="M-66.28 130.09 L-76.27 149.69 A168 168 0 0 1 -118.79 118.79 L-103.24 103.24 A146 146 0 0 0 -66.28 130.09Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d7}}"
+                onClick="{{h.d7}}"
+                aria-label="Double 7"
+              ></path>
+              <path
+                d="M-17.68 17.68 L-67.88 67.88 A96 96 0 0 1 -85.54 43.58 L-22.28 11.35 A25 25 0 0 0 -17.68 17.68Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s16i}}"
+                onClick="{{h.s16i}}"
+                aria-label="Simple 16"
+              ></path>
+              <path
+                d="M-67.88 67.88 L-83.44 83.44 A118 118 0 0 1 -105.14 53.57 L-85.54 43.58 A96 96 0 0 0 -67.88 67.88Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t16}}"
+                onClick="{{h.t16}}"
+                aria-label="Triple 16"
+              ></path>
+              <path
+                d="M-83.44 83.44 L-103.24 103.24 A146 146 0 0 1 -130.09 66.28 L-105.14 53.57 A118 118 0 0 0 -83.44 83.44Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s16o}}"
+                onClick="{{h.s16o}}"
+                aria-label="Simple 16"
+              ></path>
+              <path
+                d="M-103.24 103.24 L-118.79 118.79 A168 168 0 0 1 -149.69 76.27 L-130.09 66.28 A146 146 0 0 0 -103.24 103.24Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d16}}"
+                onClick="{{h.d16}}"
+                aria-label="Double 16"
+              ></path>
+              <path
+                d="M-22.28 11.35 L-85.54 43.58 A96 96 0 0 1 -94.82 15.02 L-24.69 3.91 A25 25 0 0 0 -22.28 11.35Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s8i}}"
+                onClick="{{h.s8i}}"
+                aria-label="Simple 8"
+              ></path>
+              <path
+                d="M-85.54 43.58 L-105.14 53.57 A118 118 0 0 1 -116.55 18.46 L-94.82 15.02 A96 96 0 0 0 -85.54 43.58Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t8}}"
+                onClick="{{h.t8}}"
+                aria-label="Triple 8"
+              ></path>
+              <path
+                d="M-105.14 53.57 L-130.09 66.28 A146 146 0 0 1 -144.20 22.84 L-116.55 18.46 A118 118 0 0 0 -105.14 53.57Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s8o}}"
+                onClick="{{h.s8o}}"
+                aria-label="Simple 8"
+              ></path>
+              <path
+                d="M-130.09 66.28 L-149.69 76.27 A168 168 0 0 1 -165.93 26.28 L-144.20 22.84 A146 146 0 0 0 -130.09 66.28Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d8}}"
+                onClick="{{h.d8}}"
+                aria-label="Double 8"
+              ></path>
+              <path
+                d="M-24.69 3.91 L-94.82 15.02 A96 96 0 0 1 -94.82 -15.02 L-24.69 -3.91 A25 25 0 0 0 -24.69 3.91Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s11i}}"
+                onClick="{{h.s11i}}"
+                aria-label="Simple 11"
+              ></path>
+              <path
+                d="M-94.82 15.02 L-116.55 18.46 A118 118 0 0 1 -116.55 -18.46 L-94.82 -15.02 A96 96 0 0 0 -94.82 15.02Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t11}}"
+                onClick="{{h.t11}}"
+                aria-label="Triple 11"
+              ></path>
+              <path
+                d="M-116.55 18.46 L-144.20 22.84 A146 146 0 0 1 -144.20 -22.84 L-116.55 -18.46 A118 118 0 0 0 -116.55 18.46Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s11o}}"
+                onClick="{{h.s11o}}"
+                aria-label="Simple 11"
+              ></path>
+              <path
+                d="M-144.20 22.84 L-165.93 26.28 A168 168 0 0 1 -165.93 -26.28 L-144.20 -22.84 A146 146 0 0 0 -144.20 22.84Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d11}}"
+                onClick="{{h.d11}}"
+                aria-label="Double 11"
+              ></path>
+              <path
+                d="M-24.69 -3.91 L-94.82 -15.02 A96 96 0 0 1 -85.54 -43.58 L-22.28 -11.35 A25 25 0 0 0 -24.69 -3.91Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s14i}}"
+                onClick="{{h.s14i}}"
+                aria-label="Simple 14"
+              ></path>
+              <path
+                d="M-94.82 -15.02 L-116.55 -18.46 A118 118 0 0 1 -105.14 -53.57 L-85.54 -43.58 A96 96 0 0 0 -94.82 -15.02Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t14}}"
+                onClick="{{h.t14}}"
+                aria-label="Triple 14"
+              ></path>
+              <path
+                d="M-116.55 -18.46 L-144.20 -22.84 A146 146 0 0 1 -130.09 -66.28 L-105.14 -53.57 A118 118 0 0 0 -116.55 -18.46Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s14o}}"
+                onClick="{{h.s14o}}"
+                aria-label="Simple 14"
+              ></path>
+              <path
+                d="M-144.20 -22.84 L-165.93 -26.28 A168 168 0 0 1 -149.69 -76.27 L-130.09 -66.28 A146 146 0 0 0 -144.20 -22.84Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d14}}"
+                onClick="{{h.d14}}"
+                aria-label="Double 14"
+              ></path>
+              <path
+                d="M-22.28 -11.35 L-85.54 -43.58 A96 96 0 0 1 -67.88 -67.88 L-17.68 -17.68 A25 25 0 0 0 -22.28 -11.35Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s9i}}"
+                onClick="{{h.s9i}}"
+                aria-label="Simple 9"
+              ></path>
+              <path
+                d="M-85.54 -43.58 L-105.14 -53.57 A118 118 0 0 1 -83.44 -83.44 L-67.88 -67.88 A96 96 0 0 0 -85.54 -43.58Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t9}}"
+                onClick="{{h.t9}}"
+                aria-label="Triple 9"
+              ></path>
+              <path
+                d="M-105.14 -53.57 L-130.09 -66.28 A146 146 0 0 1 -103.24 -103.24 L-83.44 -83.44 A118 118 0 0 0 -105.14 -53.57Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s9o}}"
+                onClick="{{h.s9o}}"
+                aria-label="Simple 9"
+              ></path>
+              <path
+                d="M-130.09 -66.28 L-149.69 -76.27 A168 168 0 0 1 -118.79 -118.79 L-103.24 -103.24 A146 146 0 0 0 -130.09 -66.28Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d9}}"
+                onClick="{{h.d9}}"
+                aria-label="Double 9"
+              ></path>
+              <path
+                d="M-17.68 -17.68 L-67.88 -67.88 A96 96 0 0 1 -43.58 -85.54 L-11.35 -22.28 A25 25 0 0 0 -17.68 -17.68Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s12i}}"
+                onClick="{{h.s12i}}"
+                aria-label="Simple 12"
+              ></path>
+              <path
+                d="M-67.88 -67.88 L-83.44 -83.44 A118 118 0 0 1 -53.57 -105.14 L-43.58 -85.54 A96 96 0 0 0 -67.88 -67.88Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t12}}"
+                onClick="{{h.t12}}"
+                aria-label="Triple 12"
+              ></path>
+              <path
+                d="M-83.44 -83.44 L-103.24 -103.24 A146 146 0 0 1 -66.28 -130.09 L-53.57 -105.14 A118 118 0 0 0 -83.44 -83.44Z"
+                fill="#151515"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s12o}}"
+                onClick="{{h.s12o}}"
+                aria-label="Simple 12"
+              ></path>
+              <path
+                d="M-103.24 -103.24 L-118.79 -118.79 A168 168 0 0 1 -76.27 -149.69 L-66.28 -130.09 A146 146 0 0 0 -103.24 -103.24Z"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d12}}"
+                onClick="{{h.d12}}"
+                aria-label="Double 12"
+              ></path>
+              <path
+                d="M-11.35 -22.28 L-43.58 -85.54 A96 96 0 0 1 -15.02 -94.82 L-3.91 -24.69 A25 25 0 0 0 -11.35 -22.28Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s5i}}"
+                onClick="{{h.s5i}}"
+                aria-label="Simple 5"
+              ></path>
+              <path
+                d="M-43.58 -85.54 L-53.57 -105.14 A118 118 0 0 1 -18.46 -116.55 L-15.02 -94.82 A96 96 0 0 0 -43.58 -85.54Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.t5}}"
+                onClick="{{h.t5}}"
+                aria-label="Triple 5"
+              ></path>
+              <path
+                d="M-53.57 -105.14 L-66.28 -130.09 A146 146 0 0 1 -22.84 -144.20 L-18.46 -116.55 A118 118 0 0 0 -53.57 -105.14Z"
+                fill="#EFDCB0"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.s5o}}"
+                onClick="{{h.s5o}}"
+                aria-label="Simple 5"
+              ></path>
+              <path
+                d="M-66.28 -130.09 L-76.27 -149.69 A168 168 0 0 1 -26.28 -165.93 L-22.84 -144.20 A146 146 0 0 0 -66.28 -130.09Z"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.d5}}"
+                onClick="{{h.d5}}"
+                aria-label="Double 5"
+              ></path>
+              <circle
+                r="25"
+                fill="#0B8A3C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.sb}}"
+                onClick="{{h.sb}}"
+                aria-label="Bull 25"
+              ></circle>
+              <circle
+                r="11"
+                fill="#D9261C"
+                stroke="#7a7a7a"
+                stroke-width="0.6"
+                class="{{c.db}}"
+                onClick="{{h.db}}"
+                aria-label="Bull 50"
+              ></circle>
+              <text
+                x="0.0"
+                y="-181.0"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                20
+              </text>
+              <text
+                x="55.9"
+                y="-172.1"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                1
+              </text>
+              <text
+                x="106.4"
+                y="-146.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                18
+              </text>
+              <text
+                x="146.4"
+                y="-106.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                4
+              </text>
+              <text
+                x="172.1"
+                y="-55.9"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                13
+              </text>
+              <text
+                x="181.0"
+                y="0.0"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                6
+              </text>
+              <text
+                x="172.1"
+                y="55.9"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                10
+              </text>
+              <text
+                x="146.4"
+                y="106.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                15
+              </text>
+              <text
+                x="106.4"
+                y="146.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                2
+              </text>
+              <text
+                x="55.9"
+                y="172.1"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                17
+              </text>
+              <text
+                x="0.0"
+                y="181.0"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                3
+              </text>
+              <text
+                x="-55.9"
+                y="172.1"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                19
+              </text>
+              <text
+                x="-106.4"
+                y="146.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                7
+              </text>
+              <text
+                x="-146.4"
+                y="106.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                16
+              </text>
+              <text
+                x="-172.1"
+                y="55.9"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                8
+              </text>
+              <text
+                x="-181.0"
+                y="0.0"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                11
+              </text>
+              <text
+                x="-172.1"
+                y="-55.9"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                14
+              </text>
+              <text
+                x="-146.4"
+                y="-106.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                9
+              </text>
+              <text
+                x="-106.4"
+                y="-146.4"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                12
+              </text>
+              <text
+                x="-55.9"
+                y="-172.1"
+                text-anchor="middle"
+                dominant-baseline="central"
+                fill="#B9B9B9"
+                font-family="Barlow Condensed, sans-serif"
+                font-weight="700"
+                font-size="15"
+                aria-hidden="true"
+              >
+                5
+              </text>
+            </svg>
+          </sc-if>
+
+          <sc-if value="{{hasWinner}}" hint-placeholder-val="{{false}}">
+            <div
+              role="dialog"
+              aria-label="Fin de partie"
+              style="
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 14px;
+                background: rgba(14, 14, 14, 0.9);
+                border-radius: 18px;
+              "
+            >
+              <span
+                style="
+                  font-size: 14px;
+                  font-weight: 700;
+                  letter-spacing: 0.14em;
+                  text-transform: uppercase;
+                  color: #7fe0a3;
+                "
+                >Game shot !</span
+              >
+              <span
+                style="
+                  font-family: 'Barlow Condensed', sans-serif;
+                  font-weight: 800;
+                  font-size: 48px;
+                  text-transform: uppercase;
+                  color: #efdcb0;
+                  text-align: center;
+                  line-height: 1;
+                "
+                >{{winnerName}} gagne</span
+              >
+              <button
+                type="button"
+                onClick="{{reset}}"
+                style="
+                  min-height: 52px;
+                  padding: 0 28px;
+                  border-radius: 14px;
+                  background: #d9261c;
+                  border: 0;
+                  color: #ffffff;
+                  font-family: 'Barlow Condensed', sans-serif;
+                  font-weight: 800;
+                  font-size: 22px;
+                  letter-spacing: 0.06em;
+                  text-transform: uppercase;
+                "
+              >
+                Rejouer
+              </button>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <button
+            type="button"
+            onClick="{{miss}}"
+            style="
+              min-height: 56px;
+              border-radius: 14px;
+              background: #1b1b1b;
+              border: 1px solid #333333;
+              color: #f4f1ea;
+              font-family: 'Barlow Condensed', sans-serif;
+              font-weight: 800;
+              font-size: 22px;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+            "
+          >
+            Raté · 0
+          </button>
+          <button
+            type="button"
+            onClick="{{endTurn}}"
+            style="
+              min-height: 56px;
+              border-radius: 14px;
+              background: #efdcb0;
+              border: 0;
+              color: #111111;
+              font-family: 'Barlow Condensed', sans-serif;
+              font-weight: 800;
+              font-size: 22px;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+            "
+          >
+            Joueur suivant
+          </button>
+        </div>
+      </div>
+    </template>
+    <script>
+      /* Mini runtime: renders a Design Component template (holes, sc-for, sc-if, events) as a standalone page. */
+      (function () {
+        var HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+        var WHOLE = /^\{\{\s*([^}]+?)\s*\}\}$/;
+        function lookup(path, scope) {
+          if (path === 'true') return true;
+          if (path === 'false') return false;
+          if (/^-?\d+(\.\d+)?$/.test(path)) return +path;
+          var parts = path.split('.'),
+            v = scope;
+          for (var i = 0; i < parts.length; i++) {
+            if (v == null) return undefined;
+            v = v[parts[i]];
+          }
+          return v;
+        }
+        function interp(str, scope) {
+          return str.replace(HOLE, function (_, p) {
+            var v = lookup(p, scope);
+            return v == null ? '' : String(v);
+          });
+        }
+        function renderNodes(nodes, scope, out) {
+          for (var i = 0; i < nodes.length; i++) renderNode(nodes[i], scope, out);
+          return out;
+        }
+        function renderNode(node, scope, out) {
+          if (node.nodeType === 3) {
+            out.push(document.createTextNode(interp(node.nodeValue, scope)));
+            return;
+          }
+          if (node.nodeType !== 1) return;
+          var tag = node.localName;
+          if (tag === 'sc-for') {
+            var list =
+              lookup((WHOLE.exec(node.getAttribute('list') || '') || [])[1] || '', scope) || [];
+            var as = node.getAttribute('as') || 'item';
+            list.forEach(function (item, idx) {
+              var s = Object.create(scope);
+              s[as] = item;
+              s.$index = idx;
+              renderNodes(node.childNodes, s, out);
+            });
+            return;
+          }
+          if (tag === 'sc-if') {
+            var cond = lookup((WHOLE.exec(node.getAttribute('value') || '') || [])[1] || '', scope);
+            if (cond) renderNodes(node.childNodes, scope, out);
+            return;
+          }
+          var el =
+            node.namespaceURI === 'http://www.w3.org/1999/xhtml'
+              ? document.createElement(tag)
+              : document.createElementNS(node.namespaceURI, node.tagName);
+          for (var a = 0; a < node.attributes.length; a++) {
+            var at = node.attributes[a],
+              name = at.name,
+              val = at.value;
+            if (name.indexOf('hint-') === 0) continue;
+            var m = WHOLE.exec(val);
+            if (name.indexOf('on') === 0 && m) {
+              var fn = lookup(m[1], scope);
+              if (typeof fn === 'function') el.addEventListener(name.slice(2), fn);
+              continue;
+            }
+            if (name === 'href' && /\.dc\.html$/.test(val))
+              val = val.replace(/\.dc\.html$/, '.html');
+            if (m) {
+              var raw = lookup(m[1], scope);
+              if (raw === false || raw == null) continue;
+              el.setAttribute(name, raw === true ? '' : String(raw));
+            } else {
+              el.setAttribute(name, val.indexOf('{{') >= 0 ? interp(val, scope) : val);
+            }
+          }
+          var src = tag === 'template' ? node.content.childNodes : node.childNodes;
+          renderNodes(src, scope, []).forEach(function (c) {
+            el.appendChild(c);
+          });
+          out.push(el);
+        }
+        var mount,
+          tpl,
+          inst,
+          queued = false;
+        function render() {
+          queued = false;
+          var vals = inst.renderVals();
+          var nodes = renderNodes(tpl.content.childNodes, vals, []);
+          mount.replaceChildren.apply(mount, nodes);
+        }
+        window.DCLogic = function DCLogic(props) {
+          this.props = props || {};
+          this.state = {};
+        };
+        window.DCLogic.prototype.setState = function (patch) {
+          this.state = Object.assign(
+            {},
+            this.state,
+            typeof patch === 'function' ? patch(this.state, this.props) : patch,
+          );
+          if (!queued) {
+            queued = true;
+            Promise.resolve().then(render);
+          }
+        };
+        window.DCLogic.prototype.forceUpdate = function () {
+          if (!queued) {
+            queued = true;
+            Promise.resolve().then(render);
+          }
+        };
+        window.__dcStart = function (Component) {
+          mount = document.getElementById('app');
+          tpl = document.getElementById('tpl');
+          inst = new Component({});
+          render();
+          if (inst.componentDidMount) inst.componentDidMount();
+        };
+      })();
+    </script>
+    <script>
+      var ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+      var DPREF = [20, 16, 8, 18, 12, 10, 4, 2, 14, 6, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
+      var THROWS = [];
+      var FINISH = {};
+      (function () {
+        for (var n = 1; n <= 20; n++) {
+          THROWS.push({
+            label: String(n),
+            val: n,
+            keys: ['s' + n + 'i', 's' + n + 'o'],
+            cost: 1 + (20 - n) * 0.01,
+          });
+          THROWS.push({ label: 'T' + n, val: 3 * n, keys: ['t' + n], cost: 2 + (20 - n) * 0.05 });
+          THROWS.push({ label: 'D' + n, val: 2 * n, keys: ['d' + n], cost: 5 + (20 - n) * 0.05 });
+        }
+        THROWS.push({ label: '25', val: 25, keys: ['sb'], cost: 3 });
+        THROWS.push({ label: 'BULL', val: 50, keys: ['db'], cost: 4 });
+        DPREF.forEach(function (n, i) {
+          FINISH[2 * n] = { label: 'D' + n, val: 2 * n, keys: ['d' + n], cost: i * 0.5 };
+        });
+        FINISH[50] = { label: 'BULL', val: 50, keys: ['db'], cost: 9 };
+      })();
+      var MEMO = {};
+      function solve(rem, n) {
+        if (rem > 170 || rem < 2 || n < 1) return null;
+        var key = rem + ':' + n;
+        if (key in MEMO) return MEMO[key];
+        var best = null,
+          bestCost = Infinity;
+        function consider(list) {
+          var c = list.length * 100;
+          list.forEach(function (t) {
+            c += t.cost;
+          });
+          if (c < bestCost) {
+            bestCost = c;
+            best = list;
+          }
+        }
+        if (FINISH[rem]) consider([FINISH[rem]]);
+        if (n >= 2)
+          THROWS.forEach(function (a) {
+            var f = FINISH[rem - a.val];
+            if (f) consider([a, f]);
+          });
+        if (n >= 3 && !best) {
+          THROWS.forEach(function (a) {
+            THROWS.forEach(function (b) {
+              if (b.val > a.val) return;
+              var f = FINISH[rem - a.val - b.val];
+              if (f) consider([a, b, f]);
+            });
+          });
+        }
+        MEMO[key] = best;
+        return best;
+      }
+      var PLAYERS = [
+        { name: 'Léa', ini: 'L', color: '#D9261C' },
+        { name: 'Maxime', ini: 'M', color: '#0B8A3C' },
+        { name: 'Sophie', ini: 'S', color: '#EFDCB0' },
+      ];
+      function initial() {
+        return {
+          scores: [141, 140, 237],
+          last: [100, 85, 41],
+          cur: 0,
+          turns: 12,
+          darts: [{ label: 'T20', val: 60, dbl: false }],
+          msg: '',
+          winner: -1,
+          history: [],
+          view: 'board',
+          mod: 1,
+        };
+      }
+      var SIZE = { keyH: 46, font: 22, modH: 46, modFont: 18, segH: 36, segFont: 15, r: 10 };
+      function padVals(self, s, co, S) {
+        var view = s.view || 'board',
+          mod = s.mod || 1;
+        var next = co ? co[0] : null,
+          nextNum = 0,
+          nextMod = 1;
+        if (next) {
+          var m = /^([TD]?)(\d+)$/.exec(next.label);
+          if (m && +m[2] <= 20) {
+            nextNum = +m[2];
+            nextMod = m[1] === 'T' ? 3 : m[1] === 'D' ? 2 : 1;
+          }
+        }
+        var tint =
+          mod === 2
+            ? 'background: #2A1210; border: 1px solid #D9261C;'
+            : mod === 3
+              ? 'background: #0F2416; border: 1px solid #0B8A3C;'
+              : 'background: #1B1B1B; border: 1px solid #333333;';
+        var base =
+          'min-height: ' +
+          S.keyH +
+          'px; border-radius: ' +
+          S.r +
+          'px; color: #F4F1EA; font-family: Barlow Condensed, sans-serif; font-weight: 800; font-size: ' +
+          S.font +
+          'px; ';
+        var pre = mod === 3 ? 'T' : mod === 2 ? 'D' : '';
+        var word = mod === 3 ? 'Triple ' : mod === 2 ? 'Double ' : 'Simple ';
+        function press(t) {
+          return function () {
+            self.setState({ mod: 1 });
+            self.hit(t);
+          };
+        }
+        var keys = [];
+        for (var n = 1; n <= 20; n++) {
+          keys.push({
+            label: pre + n,
+            aria: word + n,
+            cls: n === nextNum ? 'padnext' : '',
+            style: base + tint,
+            press: press({ label: pre + n, val: n * mod, dbl: mod === 2 }),
+          });
+        }
+        var MODS = [
+          {
+            v: 1,
+            label: 'Simple',
+            on: 'background: #EFDCB0; color: #111111; border: 1px solid #EFDCB0;',
+          },
+          {
+            v: 2,
+            label: 'Double',
+            on: 'background: #D9261C; color: #FFFFFF; border: 1px solid #D9261C;',
+          },
+          {
+            v: 3,
+            label: 'Triple',
+            on: 'background: #0B8A3C; color: #FFFFFF; border: 1px solid #0B8A3C;',
+          },
+        ];
+        var mods = MODS.map(function (md) {
+          var sel = mod === md.v;
+          return {
+            label: md.label,
+            pressed: sel ? 'true' : 'false',
+            cls: nextNum && md.v > 1 && md.v === nextMod && !sel ? 'padnext' : '',
+            pick: function () {
+              self.setState({ mod: sel && md.v > 1 ? 1 : md.v });
+            },
+            style:
+              'min-height: ' +
+              S.modH +
+              'px; border-radius: ' +
+              S.r +
+              'px; font-family: Barlow Condensed, sans-serif; font-weight: 800; font-size: ' +
+              S.modFont +
+              'px; letter-spacing: 0.06em; text-transform: uppercase; ' +
+              (sel ? md.on : 'background: #141414; color: #EFDCB0; border: 1px solid #333333;'),
+          };
+        });
+        var no25 = mod === 3;
+        var bulls = [
+          {
+            label: mod === 2 ? 'D25 = Bull' : '25',
+            aria: mod === 2 ? 'Bull 50' : 'Bull 25',
+            disabled: no25,
+            cls: next && next.label === '25' ? 'padnext' : '',
+            style:
+              base +
+              'background: #10301C; border: 1px solid #0B8A3C;' +
+              (no25 ? ' opacity: 0.35;' : ''),
+            press:
+              mod === 2
+                ? press({ label: 'BULL', val: 50, dbl: true })
+                : press({ label: '25', val: 25, dbl: false }),
+          },
+          {
+            label: 'Bull · 50',
+            aria: 'Bull 50',
+            disabled: false,
+            cls: next && next.label === 'BULL' ? 'padnext' : '',
+            style: base + 'background: #3A0F0C; border: 1px solid #D9261C;',
+            press: press({ label: 'BULL', val: 50, dbl: true }),
+          },
+        ];
+        var views = [
+          { id: 'board', label: 'Cible' },
+          { id: 'pad', label: 'Pavé numérique' },
+        ].map(function (v) {
+          var on = view === v.id;
+          return {
+            label: v.label,
+            pressed: on ? 'true' : 'false',
+            pick: function () {
+              self.setState({ view: v.id, mod: 1 });
+            },
+            style:
+              'min-height: ' +
+              S.segH +
+              'px; border-radius: ' +
+              (S.r - 2) +
+              'px; border: 0; font-weight: 700; font-size: ' +
+              S.segFont +
+              'px; ' +
+              (on
+                ? 'background: #EFDCB0; color: #111111;'
+                : 'background: transparent; color: #EFDCB0;'),
+          };
+        });
+        return {
+          showBoard: view === 'board',
+          showPad: view === 'pad',
+          views: views,
+          mods: mods,
+          keys: keys,
+          bulls: bulls,
+        };
+      }
+      function avatar(color, size) {
+        return (
+          'width: ' +
+          size +
+          'px; height: ' +
+          size +
+          'px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; background: #262626; box-shadow: inset 0 0 0 3px ' +
+          color +
+          '; color: #F4F1EA; font-family: Barlow Condensed, sans-serif; font-weight: 800; font-size: ' +
+          Math.round(size * 0.45) +
+          'px'
+        );
+      }
+      class Component extends DCLogic {
+        constructor(props) {
+          super(props);
+          this.state = initial();
+        }
+        snap() {
+          var s = this.state;
+          return {
+            scores: s.scores.slice(),
+            last: s.last.slice(),
+            cur: s.cur,
+            turns: s.turns,
+            darts: s.darts.slice(),
+            msg: s.msg,
+            winner: s.winner,
+          };
+        }
+        nextTurn(patch) {
+          var s = this.state;
+          return Object.assign(
+            { cur: (s.cur + 1) % PLAYERS.length, turns: s.turns + 1, darts: [] },
+            patch,
+          );
+        }
+        hit(t) {
+          var s = this.state;
+          if (s.winner >= 0) return;
+          var history = s.history.concat([this.snap()]);
+          var darts = s.darts.concat([t]);
+          var sum = darts.reduce(function (a, d) {
+            return a + d.val;
+          }, 0);
+          var rem = s.scores[s.cur] - sum;
+          var scores = s.scores.slice(),
+            last = s.last.slice();
+          if (rem < 0 || rem === 1 || (rem === 0 && !t.dbl)) {
+            last[s.cur] = 0;
+            this.setState(
+              this.nextTurn({
+                history: history,
+                last: last,
+                msg: 'Bust ! ' + PLAYERS[s.cur].name + ' reste à ' + s.scores[s.cur],
+              }),
+            );
+          } else if (rem === 0) {
+            scores[s.cur] = 0;
+            this.setState({
+              history: history,
+              scores: scores,
+              darts: darts,
+              winner: s.cur,
+              msg: '',
+            });
+          } else if (darts.length === 3) {
+            scores[s.cur] = rem;
+            last[s.cur] = sum;
+            this.setState(this.nextTurn({ history: history, scores: scores, last: last, msg: '' }));
+          } else {
+            this.setState({ history: history, darts: darts, msg: '' });
+          }
+        }
+        endTurn() {
+          var s = this.state;
+          if (s.winner >= 0) return;
+          var history = s.history.concat([this.snap()]);
+          var sum = s.darts.reduce(function (a, d) {
+            return a + d.val;
+          }, 0);
+          var scores = s.scores.slice(),
+            last = s.last.slice();
+          scores[s.cur] -= sum;
+          last[s.cur] = sum;
+          this.setState(this.nextTurn({ history: history, scores: scores, last: last, msg: '' }));
+        }
+        undo() {
+          var h = this.state.history;
+          if (!h.length) return;
+          var prev = h[h.length - 1];
+          this.setState(Object.assign({}, prev, { history: h.slice(0, -1) }));
+        }
+        renderVals() {
+          var self = this,
+            s = this.state;
+          var mode = this.props.mode ?? '501';
+          var sum = s.darts.reduce(function (a, d) {
+            return a + d.val;
+          }, 0);
+          var remaining = s.scores[s.cur] - sum;
+          var left = 3 - s.darts.length;
+          var co = s.winner < 0 ? solve(remaining, left) : null;
+
+          var c = {},
+            h = {};
+          function reg(key, label, val, dbl) {
+            c[key] = 'seg';
+            h[key] = function () {
+              self.hit({ label: label, val: val, dbl: dbl });
+            };
+          }
+          for (var n = 1; n <= 20; n++) {
+            reg('s' + n + 'i', String(n), n, false);
+            reg('s' + n + 'o', String(n), n, false);
+            reg('t' + n, 'T' + n, 3 * n, false);
+            reg('d' + n, 'D' + n, 2 * n, true);
+          }
+          reg('sb', '25', 25, false);
+          reg('db', 'BULL', 50, true);
+          if (co)
+            co.forEach(function (t, i) {
+              t.keys.forEach(function (k) {
+                c[k] = i === 0 ? 'seg blink' : 'seg tgt';
+              });
+            });
+
+          var slots = [0, 1, 2].map(function (i) {
+            var d = s.darts[i];
+            var base =
+              'width: 64px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: Barlow Condensed, sans-serif; font-weight: 800; font-size: 22px; box-sizing: border-box; ';
+            return d
+              ? {
+                  label: d.label,
+                  style: base + 'background: #262626; color: #F4F1EA; border: 1px solid #3A3A3A;',
+                }
+              : {
+                  label: i === s.darts.length ? '▸' : '·',
+                  style:
+                    base + 'background: transparent; color: #6A6A6A; border: 1px dashed #3A3A3A;',
+                };
+          });
+
+          var others = [];
+          for (var k = 1; k < PLAYERS.length; k++) {
+            var i = (s.cur + k) % PLAYERS.length,
+              p = PLAYERS[i];
+            others.push({
+              name: p.name,
+              ini: p.ini,
+              score: s.scores[i],
+              last: s.last[i],
+              avatar: avatar(p.color, 36),
+            });
+          }
+
+          var showMsg = !!s.msg && s.winner < 0;
+          var showCheckout = !showMsg && !!co;
+          var cp = PLAYERS[s.cur];
+          return Object.assign(padVals(self, s, co, SIZE), {
+            mode: mode,
+            round: Math.floor(s.turns / PLAYERS.length) + 1,
+            curName: cp.name,
+            curIni: cp.ini,
+            curAvatar: avatar(cp.color, 52),
+            remaining: remaining,
+            turnTotal: sum,
+            slots: slots,
+            others: others,
+            c: c,
+            h: h,
+            showCheckout: showCheckout,
+            combo: (co || []).map(function (t, i) {
+              return {
+                label: t.label,
+                cls: i === 0 ? 'chipnext' : '',
+                style:
+                  'min-width: 52px; height: 36px; padding: 0 10px; box-sizing: border-box; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-family: Barlow Condensed, sans-serif; font-weight: 800; font-size: 21px; ' +
+                  (i === 0
+                    ? 'background: #EFDCB0; color: #111111;'
+                    : 'background: transparent; color: #EFDCB0; border: 1.5px solid #EFDCB0;'),
+              };
+            }),
+            showMsg: showMsg,
+            msg: s.msg,
+            showHint: !showMsg && !co && s.winner < 0,
+            hint:
+              remaining <= 170
+                ? 'Pas de finish possible avec ' + left + ' fléchette' + (left > 1 ? 's' : '')
+                : 'Touchez la cible pour marquer',
+            hasWinner: s.winner >= 0,
+            winnerName: s.winner >= 0 ? PLAYERS[s.winner].name : '',
+            miss: function () {
+              self.hit({ label: '0', val: 0, dbl: false });
+            },
+            endTurn: function () {
+              self.endTurn();
+            },
+            undo: function () {
+              self.undo();
+            },
+            reset: function () {
+              self.setState(Object.assign(initial(), { view: self.state.view }));
+            },
+          });
+        }
+      }
+      window.__dcStart(Component);
+    </script>
+  </body>
+</html>
