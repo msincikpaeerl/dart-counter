@@ -1,0 +1,40 @@
+{
+  "name": "dart-counter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server/main.ts",
+    "start": "node dist/server/main.js",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit --project server",
+    "test:integration": "vitest run --project integration",
+    "docs:links": "remark . --frail --quiet --no-stdout"
+  },
+  "dependencies": {
+    "@fastify/multipart": "10.1.7",
+    "@fastify/static": "10.1.8",
+    "fastify": "5.12.8",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "remark-cli": "12.0.1",
+    "remark-validate-links": "13.1.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

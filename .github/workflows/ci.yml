@@ -18,17 +18,108 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: 24.21.0
+          cache: npm
 
-      # Same command as in CLAUDE.md: pinned versions, installed without a package.json into
-      # node_modules (ignored by Git). The check itself runs offline.
+      - run: npm ci
+
+      # Same command as in CLAUDE.md. The check itself runs offline.
       - name: Check documentation links
-        run: npm install --no-save --no-package-lock remark-cli@12.0.1 remark-validate-links@13.1.0 && npx remark . --frail --quiet --no-stdout
+        run: npm run docs:links
+
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+
+  typecheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  # Tests that need PostgreSQL run here only: agents cannot run a database on their machine.
+  test-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: dart
+          POSTGRES_PASSWORD: dart
+          POSTGRES_DB: dart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dart"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://dart:dart@localhost:5432/dart
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci
+      - run: npm run build
 
   # Branch protection requires this job only, by its name: never rename or remove it. List every
   # other job in its needs; it fails when any of them failed, was cancelled or was skipped.
   ci:
     if: always()
-    needs: [docs-links]
+    needs: [docs-links, lint, format, typecheck, test, test-integration, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

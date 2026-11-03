@@ -1,0 +1,33 @@
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgres://dart:${POSTGRES_PASSWORD:-dart}@db:5432/dart
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: dart
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dart}
+      POSTGRES_DB: dart
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U dart']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  pgdata:
