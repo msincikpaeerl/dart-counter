@@ -28,11 +28,11 @@ npm ci
 
 ## Environment variables
 
-Listed with defaults in [`.env.example`](../../.env.example): `PORT`, `DATABASE_URL`, `UPLOAD_DIR`, `POSTGRES_PASSWORD`. Copy it to `.env` for local use; never commit `.env`.
+Listed with defaults in [`.env.example`](../../.env.example): `PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL`, `UPLOAD_DIR`. Copy it to `.env`; never commit `.env`. Docker Compose reads `.env` itself: it builds the app's `DATABASE_URL` from the `POSTGRES_*` variables and fixes `UPLOAD_DIR` to the volume, so `DATABASE_URL` and `UPLOAD_DIR` in `.env` only matter outside Docker.
 
 ## Running the product
 
-`docker compose up --build` starts the `app` and `db` services. See [getting started](../user/getting-started.md).
+`docker compose up -d --build` starts the `app` and `db` services (nothing else). The database lives on the `pgdata` named volume, uploaded photos on the `uploads` volume (mounted at `/data`); both survive `docker compose down` (not `down -v`). The `app` service starts once the database health check passes; `src/server/main.ts` also retries the connection (`src/server/retry.ts`) before applying migrations, so a slow database does not crash it. See [getting started](../user/getting-started.md).
 
 Agents cannot run a database on their machine: they work without PostgreSQL and rely on CI for the tests that need it (see [testing](testing.md)).
 

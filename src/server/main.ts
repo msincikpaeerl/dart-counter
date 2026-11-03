@@ -1,9 +1,13 @@
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createDatabase, migrateDatabase } from './db.js';
+import { retry } from './retry.js';
 
 const config = loadConfig();
-const applied = await migrateDatabase(config.databaseUrl);
+const applied = await retry(() => migrateDatabase(config.databaseUrl), {
+  onRetry: (error, attempt) =>
+    console.log(`Waiting for the database (attempt ${attempt}): ${String(error)}`),
+});
 console.log(
   applied.length > 0
     ? `Applied migrations: ${applied.join(', ')}`
