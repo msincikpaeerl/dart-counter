@@ -38,6 +38,16 @@ describe.skipIf(!databaseUrl)('players (PostgreSQL)', () => {
     ).rejects.toBeInstanceOf(DuplicatePlayerNameError);
   });
 
+  it('creates a game with its players in play order', async () => {
+    const a = await db.createPlayer({ name: unique('A'), nickname: null, photoPath: null });
+    const b = await db.createPlayer({ name: unique('B'), nickname: null, photoPath: null });
+    const game = await db.createGame(301, [b.id, a.id]);
+    expect(game).toMatchObject({ mode: 301, status: 'in_progress' });
+    expect(game.players.map((p) => p.id)).toEqual([b.id, a.id]);
+    expect((await db.getGame(game.id))?.players.map((p) => p.id)).toEqual([b.id, a.id]);
+    expect(await db.getGame(2_000_000_000)).toBeNull();
+  });
+
   it('hides archived players from the list', async () => {
     const created = await db.createPlayer({ name: unique('Cy'), nickname: null, photoPath: null });
     expect((await db.listPlayers()).some((p) => p.id === created.id)).toBe(true);

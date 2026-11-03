@@ -6,7 +6,7 @@ const MAX_NAME_LENGTH = 40;
 const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
 
 /** A player as sent to the browser. */
-function present(player: Player) {
+export function present(player: Player) {
   return {
     id: player.id,
     name: player.name,

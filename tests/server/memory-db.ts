@@ -1,4 +1,9 @@
-import { DuplicatePlayerNameError, type Database, type Player } from '../../src/server/db.js';
+import {
+  DuplicatePlayerNameError,
+  type Database,
+  type Game,
+  type Player,
+} from '../../src/server/db.js';
 
 /** In-memory stand-in for the database, with the same player rules (unique name ignoring case). */
 export function createMemoryDb(options: { down?: boolean } = {}): Database {
@@ -12,7 +17,27 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     if (taken) throw new DuplicatePlayerNameError();
   }
 
+  const games: Game[] = [];
+
   return {
+    async createGame(mode, playerIds) {
+      const game: Game = {
+        id: games.length + 1,
+        mode,
+        status: 'in_progress',
+        players: playerIds.map((id) => {
+          const found = players.find((p) => p.id === id);
+          if (!found) throw new Error('Unknown player');
+          return { ...found };
+        }),
+      };
+      games.push(game);
+      return structuredClone(game);
+    },
+    async getGame(id) {
+      const found = games.find((g) => g.id === id);
+      return found ? structuredClone(found) : null;
+    },
     async ping() {
       if (options.down) throw new Error('down');
     },
