@@ -21,7 +21,7 @@ Archived players are not in the list. If someone is missing, press **Créer un j
 
 ## Draw the order
 
-Press **Tirer au sort**. The button stays grey until at least one player is selected. A window **Ordre de passage** shows the random order of play. The first player has a **Commence** label.
+Press the big launch button at the bottom of the options. Its label names the type of game chosen: **Start X01**, **Start Tour du monde** or **Start Bataille**, and it changes as soon as you pick another type. The button stays grey until at least one player is selected. A window **Ordre de passage** shows the random order of play. The first player has a **Commence** label.
 
 You cannot place players by hand: the order is always drawn by chance.
 
@@ -37,7 +37,7 @@ Bataille is played by two teams. Each team starts with the same number of hit po
 
 1. Choose **Bataille** under **Type de partie**. Under **Options**, pick the **Points de vie** of each team: **500** (selected at first), **1000** or **2000**.
 2. Tick the players who take part: at least **two** are needed, so that each team has one.
-3. Press **Former les équipes**. The window **Équipes** splits the players into **Équipe 1** and **Équipe 2** at random, with as many players on each side as possible. Tap a player to move them to the other team. **Relancer** draws a new split.
+3. Press **Start Bataille**. The window **Équipes** splits the players into **Équipe 1** and **Équipe 2** at random, with as many players on each side as possible. Tap a player to move them to the other team. **Relancer** draws a new split.
 4. Each team must have at least one player: if not, a red message asks you to fix it when you press **C’est parti**.
 5. **C’est parti** creates the game. **Modifier la sélection** closes the window.
 

@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- The launch button of the game setup screen now names the chosen type of game (**Start X01**, **Start Tour du monde**, **Start Bataille**) and changes as soon as you pick another type; it launches the game as before; see [Starting a game](docs/user/new-game.md).
+
 - Fixed: on the game type screen, the title **Bataille** no longer sticks out of its square, on a phone or a large screen. The titles of **X01** and **Tour du monde** stay inside their squares too.
 
 - **Statistiques** and **Historique** now cover every type of game. A row of buttons (**Tous**, **X01**, **Tour du monde**, **Bataille**) filters the screen by type. On a player's page the figures are split by type and by options, never added together: X01 501 double out apart from X01 501 simple out, Tour du monde Débutant apart from Professionnel, Bataille by points de vie. Every type shows games played, won and win %; X01 also shows the average, best visit, 180s, 100+ visits and highest checkout. The history shows the type and options of each game. Abandoned games stay excluded and older X01 games are filed under their own options; see [Statistics and game history](docs/user/statistics.md).
