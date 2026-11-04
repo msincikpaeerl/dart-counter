@@ -7,7 +7,7 @@ The game page opens when you press **C’est parti** (see [Starting a game](new-
 - **The top bar** shows the game (for example _501 · Double out_) and the round (**Manche**). The arrow on the left leaves the game and goes back to the menu. **Annuler** undoes the last dart.
 - **The player card** (red frame) belongs to the person who throws. It shows their name, their remaining score in large figures, the three darts of the current turn and the total of the turn.
 - **The other players** are listed below, in the order they will throw after the current player, with their remaining score and the score of their last turn.
-- **The board** fills the rest of the screen.
+- **The board** fills the rest of the screen. The numbers 1 to 20 around it are shown in a light, bright, non-bold type so they stay easy to read on a phone; they are only labels, tapping a number itself does nothing special.
 
 ## Scoring a dart
 
