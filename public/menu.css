@@ -496,6 +496,30 @@ h2 {
   text-transform: uppercase;
 }
 
+.teams-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.team h3 {
+  margin: 0 0 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  color: var(--cream);
+}
+
+.team .order button {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  cursor: pointer;
+}
+
 .error {
   margin: 0;
   padding: 12px 14px;

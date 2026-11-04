@@ -11,7 +11,7 @@ import { present } from './players.js';
 
 /** Only finished games are ever read here: abandoned and unfinished ones are left out. */
 async function listFinishedX01(db: Database): Promise<FinishedGame[]> {
-  // Statistics and history only cover X01 for now: around the world games are left out.
+  // Statistics and history only cover X01 for now: around the world and Bataille games are left out.
   return (await db.listFinishedGames()).filter((game) => game.type === 'x01');
 }
 

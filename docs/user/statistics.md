@@ -2,6 +2,8 @@
 
 The **Statistiques** screen shows how each player is doing and lets you look back at past games. Open it from the home page with the **Statistiques et historique** link, or go to the address `/statistiques`. It works the same on a phone and on a tablet.
 
+Only **X01** games are covered: **Bataille** (team) games are not in the statistics nor in the history.
+
 Only **finished** games count: a game that was left unfinished, or abandoned, never appears in the statistics nor in the history.
 
 ## A player's statistics

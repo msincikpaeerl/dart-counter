@@ -341,6 +341,99 @@
     }
   }
 
+  /** Bataille: both teams' hit points, the team to hit is the one the current player attacks. */
+  function renderBattle() {
+    var current = playerById(
+      state.currentPlayerId !== null ? state.currentPlayerId : state.winnerId,
+    );
+    $('mode').textContent = 'Bataille · ' + state.mode + ' PV';
+    $('round').textContent = 'Manche ' + state.round;
+    $('undo').disabled = !state.canUndo;
+
+    var box = $('battle-teams');
+    var cards = state.teams.map(function (team) {
+      var card = el('div', 'battle-team');
+      if (team.number === state.currentTeam) card.classList.add('playing');
+      if (state.winnerTeam === team.number) card.classList.add('won');
+      if (team.hitPoints === 0) card.classList.add('down');
+      card.appendChild(el('span', 'battle-team-name', 'Équipe ' + team.number));
+      card.appendChild(el('span', 'battle-hp', String(team.hitPoints)));
+      var bar = el('span', 'battle-bar');
+      var fill = el('span', 'battle-bar-fill');
+      fill.style.width = Math.round((100 * team.hitPoints) / state.mode) + '%';
+      bar.appendChild(fill);
+      card.appendChild(bar);
+      card.appendChild(
+        el(
+          'span',
+          'battle-members',
+          team.playerIds
+            .map(function (playerId) {
+              return playerById(playerId).name;
+            })
+            .join(', '),
+        ),
+      );
+      return card;
+    });
+    box.replaceChildren.apply(box, cards);
+    box.hidden = false;
+
+    var avatar = buildAvatar(current);
+    avatar.id = 'cur-avatar';
+    $('cur-avatar').replaceWith(avatar);
+    $('cur-name').textContent = current.name;
+    var attackedTeam = state.currentTeam === null ? null : 3 - state.currentTeam;
+    $('cur-score').textContent =
+      attackedTeam === null ? '' : String(state.teams[attackedTeam - 1].hitPoints);
+
+    var visit =
+      state.currentVisit && state.currentVisit.playerId === current.id ? state.currentVisit : null;
+    var thrown = visit ? visit.darts : [];
+    for (var i = 0; i < 3; i++) {
+      var slot = $('slot-' + i);
+      if (thrown[i]) {
+        slot.className = 'slot';
+        slot.textContent = thrown[i].label;
+      } else {
+        slot.className = 'slot empty';
+        slot.textContent = i === thrown.length ? '▸' : '·';
+      }
+    }
+    $('total').textContent = '= ' + (visit ? visit.scored : 0);
+
+    document.querySelector('.others').hidden = true;
+    var status = $('status');
+    status.replaceChildren(
+      state.winnerId === null
+        ? el(
+            'div',
+            'hint',
+            'Chaque point marqué retire des points de vie à l’équipe ' + attackedTeam,
+          )
+        : el('div', 'hint', ''),
+    );
+    var zones = $('board').querySelectorAll('[data-key]');
+    for (var z = 0; z < zones.length; z++) zones[z].setAttribute('class', 'seg');
+    renderPad();
+
+    var won = state.winnerId !== null;
+    $('winner').hidden = !won;
+    if (won) {
+      $('winner-name').textContent =
+        'Équipe ' +
+        state.winnerTeam +
+        ' gagne · ' +
+        state.teams[state.winnerTeam - 1].playerIds
+          .map(function (playerId) {
+            return playerById(playerId).name;
+          })
+          .join(', ');
+    }
+    $('miss').disabled = won;
+    $('next').disabled = won;
+  }
+
   var atw = false; // the game is an around the world game
 
   /** Progress of a player in around the world, e.g. "3 / 21". */
@@ -379,6 +472,10 @@
 
   function render() {
     atw = state.type === 'around_the_world';
+    if (state.type === 'battle') {
+      renderBattle();
+      return;
+    }
     var current = playerById(
       state.currentPlayerId !== null ? state.currentPlayerId : state.winnerId,
     );

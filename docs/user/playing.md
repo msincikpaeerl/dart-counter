@@ -35,6 +35,22 @@ The top bar shows the rule of the player whose turn it is (_Simple out_ or _Doub
 - **Bust**: if a dart takes you below 0 the whole turn scores nothing. For a player with **Double out forcé**, leaving 1, or reaching 0 without a double, is a bust too. After a bust, your score goes back to what it was at the start of the turn, a red message tells you so, and the turn passes to the next player.
 - When someone checks out, a **Game shot !** window shows the winner. Press **Rejouer** to start a new game with the same players and the same type of game, starting score and finish. The order of play is drawn again at random.
 
+## Bataille
+
+In a Bataille game (see [Starting a game](new-game.md#bataille-by-teams)) the top bar shows _Bataille · 500 PV_ (or 1000, 2000) and the screen has a different layout:
+
+- **The two team cards** at the top show, for **Équipe 1** and **Équipe 2**, the hit points left (large figures and a bar) and the names of the players. The card of the team that is throwing has a red frame. Both teams see these figures at all times.
+- **The player card** shows who throws, the darts of the turn and the total of the turn. The large figure on the right is the hit points of the team being attacked.
+- There is no list of next players, and no checkout hint.
+
+Teams alternate: one player of a team throws their three darts, then a player of the other team, and so on. When a team has several players, they follow each other in turn each time it is the team's turn.
+
+Darts are entered as in any game (board or keypad, **Raté · 0**, **Joueur suivant**, **Annuler**). The total of a turn is **taken off the hit points of the opposing team** as the darts are entered; a team never attacks itself. There is no bust.
+
+As soon as a team has no hit points left, it has lost: the turn stops at that dart, and the window **Équipe N gagne** names the winning team and its players. **Rejouer** starts a new game with the same teams and a new order inside each team. **Annuler** reopens a finished game by undoing the last dart.
+
+A Bataille game can be resumed or abandoned like any other (see [Resuming or abandoning a game](resume-game.md)). Bataille games are not part of the X01 statistics and history.
+
 ## Correcting a mistake
 
 Press **Annuler** to remove the last dart. You can press it as many times as you like, even to go back to a previous player's turn, to cancel a bust, or to reopen a game that was just won. Nothing is left over: the scores and the saved darts go back to how they were.

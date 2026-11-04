@@ -23,11 +23,12 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
   const results = new Map<number, { winnerId: number; finishedAt: string }>();
 
   function add(
-    options: Pick<Game, 'type' | 'mode' | 'doubleOut' | 'level'>,
+    options: Pick<Game, 'type' | 'mode' | 'doubleOut' | 'level'> & { teams?: Game['teams'] },
     playerIds: number[],
   ): Game {
     const game: Game = {
       id: games.length + 1,
+      teams: null,
       ...options,
       status: 'in_progress',
       players: playerIds.map((id) => {
@@ -49,6 +50,12 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     },
     async createAroundTheWorldGame(level, playerIds) {
       return add({ type: 'around_the_world', mode: null, doubleOut: false, level }, playerIds);
+    },
+    async createBattleGame(hitPoints, teams) {
+      return add(
+        { type: 'battle', mode: hitPoints, doubleOut: false, level: null, teams },
+        teams.flat(),
+      );
     },
     async getGame(id) {
       const found = games.find((g) => g.id === id);

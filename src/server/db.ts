@@ -31,9 +31,11 @@ export class DuplicatePlayerNameError extends Error {
 /** A game with its players in play order (first to throw first). */
 export interface Game {
   id: number;
-  type: 'x01' | 'around_the_world';
-  /** X01 option: the starting score (null for other types). */
-  mode: 301 | 501 | 701 | null;
+  type: 'x01' | 'around_the_world' | 'battle';
+  /** X01 option: the starting score. Battle option: the hit points of each team. Else null. */
+  mode: 301 | 501 | 701 | 500 | 1000 | 2000 | null;
+  /** Battle only: the ids of the players of team 1 and of team 2, in throwing order. */
+  teams: [number[], number[]] | null;
   /** X01 option: finish on a double for every player (a player's own double out also applies). */
   doubleOut: boolean;
   /** Around the world option: the level (null for other types). */
@@ -78,12 +80,14 @@ export interface Database {
   updatePlayer(id: number, changes: PlayerChanges): Promise<Player | null>;
   /** Archives the player; returns null when the player does not exist. */
   archivePlayer(id: number): Promise<Player | null>;
-  /** Creates a game; `playerIds` is the play order. Players must exist. */
+  /** Creates an X01 game; `playerIds` is the play order. Players must exist. */
   createGame(
     mode: 301 | 501 | 701,
     playerIds: number[],
     options?: { doubleOut?: boolean },
   ): Promise<Game>;
+  /** Creates a Bataille game: each team's players are in throwing order. */
+  createBattleGame(hitPoints: 500 | 1000 | 2000, teams: [number[], number[]]): Promise<Game>;
   /** Creates an around the world game; `playerIds` is the play order. */
   createAroundTheWorldGame(level: 'beginner' | 'pro', playerIds: number[]): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
@@ -155,16 +159,33 @@ export function createDatabase(databaseUrl: string): Database {
     );
     const row = game.rows[0];
     if (!row) return null;
-    const players = await pool.query<PlayerRow>(
-      `SELECT p.id::int AS id, p.name, p.nickname, p.photo_path, p.archived, p.double_out
+    const players = await pool.query<PlayerRow & { team: number | null }>(
+      `SELECT p.id::int AS id, p.name, p.nickname, p.photo_path, p.archived, p.double_out, gp.team
        FROM game_players gp JOIN players p ON p.id = gp.player_id
        WHERE gp.game_id = $1 ORDER BY gp.play_order`,
       [id],
     );
+    const teams: [number[], number[]] | null =
+      row.game_type === 'battle'
+        ? [
+            players.rows.filter((p) => p.team === 1).map((p) => p.id),
+            players.rows.filter((p) => p.team === 2).map((p) => p.id),
+          ]
+        : null;
     return {
       id: row.id,
       type: row.game_type,
-      mode: row.game_type !== 'x01' ? null : row.mode === 301 ? 301 : row.mode === 701 ? 701 : 501,
+      mode:
+        row.game_type === 'battle'
+          ? ((row.mode === 1000 ? 1000 : row.mode === 2000 ? 2000 : 500) as Game['mode'])
+          : row.game_type !== 'x01'
+            ? null
+            : row.mode === 301
+              ? 301
+              : row.mode === 701
+                ? 701
+                : 501,
+      teams,
       doubleOut: row.double_out,
       level: row.level,
       status: row.status,
@@ -176,6 +197,7 @@ export function createDatabase(databaseUrl: string): Database {
   async function insertGame(
     statement: { text: string; values: unknown[] },
     playerIds: number[],
+    teamOf: (number | null)[] = playerIds.map(() => null),
   ): Promise<Game> {
     const client = await pool.connect();
     let gameId: number;
@@ -184,9 +206,10 @@ export function createDatabase(databaseUrl: string): Database {
       const inserted = await client.query<{ id: number }>(statement.text, statement.values);
       gameId = inserted.rows[0]?.id ?? 0;
       await client.query(
-        `INSERT INTO game_players (game_id, player_id, play_order)
-         SELECT $1, p.id, p.ord FROM unnest($2::bigint[]) WITH ORDINALITY AS p(id, ord)`,
-        [gameId, playerIds],
+        `INSERT INTO game_players (game_id, player_id, play_order, team)
+         SELECT $1, p.id, p.ord, p.team
+         FROM unnest($2::bigint[], $3::smallint[]) WITH ORDINALITY AS p(id, team, ord)`,
+        [gameId, playerIds, teamOf],
       );
       await client.query('COMMIT');
     } catch (error) {
@@ -222,6 +245,17 @@ export function createDatabase(databaseUrl: string): Database {
           values: [level],
         },
         playerIds,
+      );
+    },
+    createBattleGame(hitPoints, teams) {
+      return insertGame(
+        {
+          text: `INSERT INTO games (game_type, mode) VALUES ('battle', $1)
+                 RETURNING id::int AS id`,
+          values: [hitPoints],
+        },
+        teams.flat(),
+        [...teams[0].map(() => 1), ...teams[1].map(() => 2)],
       );
     },
     getGame: loadGame,

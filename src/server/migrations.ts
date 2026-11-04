@@ -101,4 +101,22 @@ ALTER TABLE games ADD CONSTRAINT games_type_options_check CHECK (
 );
 `,
   },
+  {
+    name: '0005_battle_game_type',
+    sql: `
+-- Battle (two teams): "mode" is the starting hit points of each team (500, 1000 or 2000) and
+-- game_players.team tells which team (1 or 2) a player is in. It stays empty for other types.
+ALTER TABLE games DROP CONSTRAINT games_mode_check;
+ALTER TABLE games ADD CONSTRAINT games_mode_check CHECK (mode IN (301, 501, 701, 500, 1000, 2000));
+ALTER TABLE games DROP CONSTRAINT games_game_type_check;
+ALTER TABLE games ADD CONSTRAINT games_game_type_check
+  CHECK (game_type IN ('x01', 'around_the_world', 'battle'));
+ALTER TABLE games DROP CONSTRAINT games_type_options_check;
+ALTER TABLE games ADD CONSTRAINT games_type_options_check CHECK (
+  (game_type IN ('x01', 'battle') AND mode IS NOT NULL AND level IS NULL)
+  OR (game_type = 'around_the_world' AND mode IS NULL AND level IS NOT NULL)
+);
+ALTER TABLE game_players ADD COLUMN team smallint CHECK (team IN (1, 2));
+`,
+  },
 ];
