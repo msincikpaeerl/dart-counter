@@ -18,18 +18,30 @@ export function dartValue(dart: Dart): number {
 }
 
 /**
- * Applies up to three darts to a remaining score (double-out rule).
- * A turn is a bust when it goes below 0, leaves 1, or reaches 0 without a double.
+ * Whether a score left after a dart is a bust. Simple out (default): only going below 0.
+ * Forced double out: also leaving 1, or reaching 0 with a dart that is not a double (or bullseye).
  */
-export function applyTurn(remaining: number, darts: readonly Dart[]): TurnResult {
+export function isBust(left: number, dart: Dart, doubleOut: boolean): boolean {
+  if (left < 0) return true;
+  if (!doubleOut) return false;
+  return left === 1 || (left === 0 && dart.multiplier !== 2);
+}
+
+/**
+ * Applies up to three darts to a remaining score.
+ * Simple out by default: any dart reaching exactly 0 wins. With `doubleOut`, the turn is a bust
+ * when it goes below 0, leaves 1, or reaches 0 without a double.
+ */
+export function applyTurn(
+  remaining: number,
+  darts: readonly Dart[],
+  doubleOut = false,
+): TurnResult {
   let left = remaining;
   for (const dart of darts) {
     left -= dartValue(dart);
-    if (left < 0 || left === 1) return { remaining, bust: true, finished: false };
-    if (left === 0) {
-      if (dart.multiplier !== 2) return { remaining, bust: true, finished: false };
-      return { remaining: 0, bust: false, finished: true };
-    }
+    if (isBust(left, dart, doubleOut)) return { remaining, bust: true, finished: false };
+    if (left === 0) return { remaining: 0, bust: false, finished: true };
   }
   return { remaining: left, bust: false, finished: false };
 }

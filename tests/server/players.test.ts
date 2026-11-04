@@ -80,6 +80,43 @@ describe('players API', () => {
     expect(response.json()).toMatchObject({ name: 'Alice', nickname: null, photoUrl: null });
   });
 
+  it('creates players with double out off by default, and saves the option', async () => {
+    const plain = (await create({ name: 'Plain' })).json<{ doubleOut: boolean }>();
+    expect(plain.doubleOut).toBe(false);
+    const forced = (await create({ name: 'Forced', doubleOut: '1' })).json<{
+      id: number;
+      doubleOut: boolean;
+    }>();
+    expect(forced.doubleOut).toBe(true);
+    const list = await app.inject({ method: 'GET', url: '/api/players' });
+    expect(list.json<{ name: string; doubleOut: boolean }[]>()).toMatchObject([
+      { name: 'Forced', doubleOut: true },
+      { name: 'Plain', doubleOut: false },
+    ]);
+  });
+
+  it('edits the double-out option both ways', async () => {
+    const created = (await create({ name: 'Edit' })).json<{ id: number }>();
+    const url = `/api/players/${created.id}`;
+    const on = await app.inject({
+      method: 'PUT',
+      url,
+      ...multipart({ name: 'Edit', doubleOut: '1' }),
+    });
+    expect(on.json<{ doubleOut: boolean }>().doubleOut).toBe(true);
+    const off = await app.inject({
+      method: 'PUT',
+      url,
+      ...multipart({ name: 'Edit', doubleOut: '0' }),
+    });
+    expect(off.json<{ doubleOut: boolean }>().doubleOut).toBe(false);
+  });
+
+  it('shows the option on the players screen', async () => {
+    const page = await app.inject({ method: 'GET', url: '/joueurs' });
+    expect(page.body).toContain('Double out forcé');
+  });
+
   it('creates a player with a nickname and lists it', async () => {
     await create({ name: 'Bob', nickname: 'La Flèche' });
     const list = await app.inject({ method: 'GET', url: '/api/players' });

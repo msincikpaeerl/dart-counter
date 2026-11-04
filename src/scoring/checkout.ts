@@ -20,9 +20,15 @@ function buildSetupDarts(): Dart[] {
   return darts.sort((a, b) => dartValue(b) - dartValue(a));
 }
 
-const FINAL_DARTS: readonly Dart[] = [
+const DOUBLE_FINALS: readonly Dart[] = [
   ...DOUBLE_PREFERENCE.map((sector): Dart => ({ sector, multiplier: 2 })),
   BULL,
+];
+
+/** Simple out: the doubles first (so the usual routes stay), then any other dart. */
+const SIMPLE_FINALS: readonly Dart[] = [
+  ...DOUBLE_FINALS,
+  ...SETUP_DARTS.filter((dart) => dart.multiplier !== 2),
 ];
 
 interface Route {
@@ -43,12 +49,15 @@ function isBullish(dart: Dart): boolean {
   return dart.sector === 25;
 }
 
-function search(remaining: number, dartCount: number): Dart[] | null {
+function search(remaining: number, dartCount: number, doubleOut: boolean): Dart[] | null {
+  const finals = doubleOut ? DOUBLE_FINALS : SIMPLE_FINALS;
+  // Double out must leave at least 2 for the final double; simple out at least 1.
+  const minLeft = doubleOut ? 2 : 1;
   let best: Route | null = null;
 
   const visit = (setup: Dart[], left: number): void => {
     if (setup.length === dartCount - 1) {
-      FINAL_DARTS.forEach((last, finalRank) => {
+      finals.forEach((last, finalRank) => {
         if (dartValue(last) !== left) return;
         const darts = [...setup, last];
         const rank = [
@@ -62,8 +71,7 @@ function search(remaining: number, dartCount: number): Dart[] | null {
     }
     for (const dart of SETUP_DARTS) {
       const value = dartValue(dart);
-      // Leave at least 2 for the final double.
-      if (left - value >= 2) visit([...setup, dart], left - value);
+      if (left - value >= minLeft) visit([...setup, dart], left - value);
     }
   };
 
@@ -71,21 +79,33 @@ function search(remaining: number, dartCount: number): Dart[] | null {
   return (best as Route | null)?.darts ?? null;
 }
 
+/** Highest score that can be checked out with three darts in simple out (T20 T20 T20). */
+export const MAX_SIMPLE_CHECKOUT = 180;
+
 const cache = new Map<string, Dart[] | null>();
 
 /**
  * Suggests how to check out `remaining` within `dartsLeft` darts (1 to 3) of the current visit.
  * Uses the fewest darts possible, prefers D20, D16, D8 and avoids the bull unless needed.
- * Returns null above 170, for bogey numbers, or when it cannot be done in the darts left.
+ * With `doubleOut` the last dart is a double or the bull; otherwise (simple out, the default) it can
+ * be any dart. Returns null above 170 (180 in simple out), for bogey numbers in double out, or when
+ * it cannot be done in the darts left.
  */
-export function suggestCheckout(remaining: number, dartsLeft: number): Dart[] | null {
+export function suggestCheckout(
+  remaining: number,
+  dartsLeft: number,
+  doubleOut = false,
+): Dart[] | null {
   if (!Number.isInteger(remaining) || !Number.isInteger(dartsLeft)) return null;
-  if (remaining < 2 || remaining > MAX_CHECKOUT || dartsLeft < 1 || dartsLeft > 3) return null;
-  const key = `${remaining}:${dartsLeft}`;
+  const min = doubleOut ? 2 : 1;
+  const max = doubleOut ? MAX_CHECKOUT : MAX_SIMPLE_CHECKOUT;
+  if (remaining < min || remaining > max || dartsLeft < 1 || dartsLeft > 3) return null;
+  const key = `${remaining}:${dartsLeft}:${doubleOut}`;
   const cached = cache.get(key);
   if (cached !== undefined) return cached ? [...cached] : null;
   let found: Dart[] | null = null;
-  for (let count = 1; count <= dartsLeft && !found; count++) found = search(remaining, count);
+  for (let count = 1; count <= dartsLeft && !found; count++)
+    found = search(remaining, count, doubleOut);
   cache.set(key, found);
   return found ? [...found] : null;
 }

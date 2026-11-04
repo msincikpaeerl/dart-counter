@@ -8,11 +8,15 @@ export interface Player {
   /** File name inside UPLOAD_DIR, or null when the player has no photo. */
   photoPath: string | null;
   archived: boolean;
+  /** Must finish on a double (or the bull). Off by default: simple out. */
+  doubleOut: boolean;
 }
 
 export interface PlayerChanges {
   name: string;
   nickname: string | null;
+  /** `undefined` keeps the current value. */
+  doubleOut?: boolean;
   /** `undefined` keeps the current photo, `null` removes it. */
   photoPath?: string | null;
 }
@@ -62,6 +66,7 @@ export interface Database {
     name: string;
     nickname: string | null;
     photoPath: string | null;
+    doubleOut?: boolean;
   }): Promise<Player>;
   /** Returns null when the player does not exist. */
   updatePlayer(id: number, changes: PlayerChanges): Promise<Player | null>;
@@ -91,9 +96,10 @@ interface PlayerRow {
   nickname: string | null;
   photo_path: string | null;
   archived: boolean;
+  double_out: boolean;
 }
 
-const PLAYER_COLUMNS = 'id::int AS id, name, nickname, photo_path, archived';
+const PLAYER_COLUMNS = 'id::int AS id, name, nickname, photo_path, archived, double_out';
 const UNIQUE_VIOLATION = '23505';
 
 function toPlayer(row: PlayerRow): Player {
@@ -103,6 +109,7 @@ function toPlayer(row: PlayerRow): Player {
     nickname: row.nickname,
     photoPath: row.photo_path,
     archived: row.archived,
+    doubleOut: row.double_out,
   };
 }
 
@@ -130,7 +137,7 @@ export function createDatabase(databaseUrl: string): Database {
     const row = game.rows[0];
     if (!row) return null;
     const players = await pool.query<PlayerRow>(
-      `SELECT p.id::int AS id, p.name, p.nickname, p.photo_path, p.archived
+      `SELECT p.id::int AS id, p.name, p.nickname, p.photo_path, p.archived, p.double_out
        FROM game_players gp JOIN players p ON p.id = gp.player_id
        WHERE gp.game_id = $1 ORDER BY gp.play_order`,
       [id],
@@ -284,9 +291,9 @@ export function createDatabase(databaseUrl: string): Database {
     },
     async createPlayer(input) {
       const player = await run(
-        `INSERT INTO players (name, nickname, photo_path) VALUES ($1, $2, $3)
+        `INSERT INTO players (name, nickname, photo_path, double_out) VALUES ($1, $2, $3, $4)
          RETURNING ${PLAYER_COLUMNS}`,
-        [input.name, input.nickname, input.photoPath],
+        [input.name, input.nickname, input.photoPath, input.doubleOut ?? false],
       );
       if (!player) throw new Error('Insert returned no row');
       return player;
@@ -295,9 +302,17 @@ export function createDatabase(databaseUrl: string): Database {
       const keepPhoto = changes.photoPath === undefined;
       return run(
         `UPDATE players SET name = $2, nickname = $3,
-           photo_path = CASE WHEN $4 THEN photo_path ELSE $5 END
+           photo_path = CASE WHEN $4 THEN photo_path ELSE $5 END,
+           double_out = COALESCE($6, double_out)
          WHERE id = $1 RETURNING ${PLAYER_COLUMNS}`,
-        [id, changes.name, changes.nickname, keepPhoto, changes.photoPath ?? null],
+        [
+          id,
+          changes.name,
+          changes.nickname,
+          keepPhoto,
+          changes.photoPath ?? null,
+          changes.doubleOut ?? null,
+        ],
       );
     },
     archivePlayer(id) {

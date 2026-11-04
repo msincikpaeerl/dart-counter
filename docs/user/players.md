@@ -7,10 +7,15 @@ The **Joueurs** screen lets you create the people who play, change their details
 1. Press **Nouveau joueur**.
 2. Type the **Nom** (required). Each name can be used only once, whatever the capital letters: "Alice" and "alice" are the same player. If the name is already taken, the message _« Un joueur porte déjà ce nom. Choisissez un autre nom. »_ appears and nothing is saved.
 3. Optionally type a **Surnom** (nickname).
-4. Optionally add a photo (see below).
-5. Press **Enregistrer le joueur**.
+4. Optionally tick **Double out forcé** if this player must finish on a double (see below). It is off for a new player.
+5. Optionally add a photo (see below).
+6. Press **Enregistrer le joueur**.
 
 Without a photo, the player is shown with the first letter of their name inside a coloured ring.
+
+## The "Double out forcé" option
+
+By default a player is **simple out**: any dart that brings their score exactly to zero wins, whether it is a single, a double, a triple or the bull. Tick **Double out forcé** for a player who wants the harder rule: they only win with a double or the bull. See [Playing a game](playing.md#finishing-a-game) for what happens when they miss. The option is saved with the player and shown again when you edit them. Players created before this option existed are simple out. The rule applies to games that are already in progress too, so change it between games.
 
 ## Add a photo
 
@@ -23,7 +28,7 @@ Photos are reduced automatically (no larger than 512 pixels), so you can use any
 
 ## Edit a player
 
-In the list, press **Modifier** next to the player. Change the name, nickname or photo, then press **Enregistrer le joueur**.
+In the list, press **Modifier** next to the player. Change the name, nickname, the **Double out forcé** option or the photo, then press **Enregistrer le joueur**.
 
 ## Archive a player
 

@@ -392,6 +392,25 @@ h1 {
   border-color: var(--red);
 }
 
+.field label.check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.field input[type='checkbox'] {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  accent-color: var(--green, #0b8a3c);
+}
+
+.field .muted {
+  margin: 0;
+  font-size: 14px;
+}
+
 .error {
   margin: 0;
   padding: 12px 14px;

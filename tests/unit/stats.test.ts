@@ -10,6 +10,7 @@ const MISS: Dart = { sector: 0, multiplier: 1 };
 const soloGame: FinishedGameInput = {
   startScore: 301,
   players: ['1'],
+  doubleOutPlayers: ['1'],
   darts: [
     // 180: 121 left.
     T(20),

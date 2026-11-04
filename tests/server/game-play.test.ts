@@ -40,8 +40,11 @@ describe('game play API', () => {
     uploadDir = await mkdtemp(join(tmpdir(), 'dart-uploads-'));
     db = createMemoryDb();
     app = await buildApp({ db, uploadDir });
-    a = (await db.createPlayer({ name: 'Léa', nickname: null, photoPath: null })).id;
-    b = (await db.createPlayer({ name: 'Max', nickname: null, photoPath: null })).id;
+    // Both players must finish on a double, unless a test says otherwise.
+    a = (await db.createPlayer({ name: 'Léa', nickname: null, photoPath: null, doubleOut: true }))
+      .id;
+    b = (await db.createPlayer({ name: 'Max', nickname: null, photoPath: null, doubleOut: true }))
+      .id;
     const created = await app.inject({
       method: 'POST',
       url: '/api/games',

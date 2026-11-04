@@ -30,6 +30,19 @@ describe.skipIf(!databaseUrl)('players (PostgreSQL)', () => {
     expect(await db.updatePlayer(2_000_000_000, { name: unique('x'), nickname: null })).toBeNull();
   });
 
+  it('stores the double-out option, off by default and kept when not given', async () => {
+    const plain = await db.createPlayer({ name: unique('Do'), nickname: null, photoPath: null });
+    expect(plain.doubleOut).toBe(false);
+    const forced = await db.updatePlayer(plain.id, {
+      name: plain.name,
+      nickname: null,
+      doubleOut: true,
+    });
+    expect(forced?.doubleOut).toBe(true);
+    const kept = await db.updatePlayer(plain.id, { name: plain.name, nickname: null });
+    expect(kept?.doubleOut).toBe(true);
+  });
+
   it('refuses a duplicate name ignoring case', async () => {
     const name = unique('Bob');
     await db.createPlayer({ name, nickname: null, photoPath: null });

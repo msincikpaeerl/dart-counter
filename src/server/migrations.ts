@@ -66,4 +66,11 @@ CREATE TABLE darts (
 CREATE INDEX darts_player_idx ON darts (player_id);
 `,
   },
+  {
+    name: '0002_player_double_out',
+    sql: `
+-- Existing players finish with simple out; forcing a double is an option of the player.
+ALTER TABLE players ADD COLUMN double_out boolean NOT NULL DEFAULT false;
+`,
+  },
 ];

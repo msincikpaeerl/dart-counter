@@ -6,6 +6,8 @@ export interface FinishedGameInput {
   startScore: number;
   /** Player ids in throwing order. */
   players: readonly string[];
+  /** Ids of the players who must finish on a double (simple out for the others). */
+  doubleOutPlayers?: readonly string[];
   /** Every dart of the game, in throwing order. */
   darts: readonly Dart[];
   winner: string | null;
@@ -48,7 +50,11 @@ export function computePlayerStats(
     gamesPlayed++;
     if (game.winner === playerId) gamesWon++;
     const view = getGameView({
-      config: { startScore: game.startScore, players: game.players },
+      config: {
+        startScore: game.startScore,
+        players: game.players,
+        ...(game.doubleOutPlayers ? { doubleOutPlayers: game.doubleOutPlayers } : {}),
+      },
       darts: game.darts,
     });
     for (const visit of view.visits) {

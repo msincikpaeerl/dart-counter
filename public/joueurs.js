@@ -13,6 +13,7 @@
   var form = $('player-form');
   var nameInput = $('name');
   var nicknameInput = $('nickname');
+  var doubleOutInput = $('double-out');
   var errorBox = $('error');
   var video = $('video');
   var preview = $('preview');
@@ -272,6 +273,7 @@
     removePhoto = false;
     nameInput.value = player ? player.name : '';
     nicknameInput.value = player && player.nickname ? player.nickname : '';
+    doubleOutInput.checked = Boolean(player && player.doubleOut);
     setError('');
     $('form-title').textContent = player ? 'Modifier le joueur' : 'Nouveau joueur';
     listView.hidden = true;
@@ -294,6 +296,7 @@
     var data = new FormData();
     data.append('name', name);
     data.append('nickname', nicknameInput.value.trim());
+    data.append('doubleOut', doubleOutInput.checked ? '1' : '0');
     if (removePhoto) data.append('removePhoto', '1');
     if (photoBlob) data.append('photo', photoBlob, 'photo.jpg');
     saveButton.disabled = true;

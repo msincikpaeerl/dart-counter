@@ -18,6 +18,7 @@ async function loadFinished(db: Database) {
     inputs.set(game.id, {
       startScore: game.mode,
       players: game.players.map((p) => String(p.id)),
+      doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
       darts: records.map(toEngineDart),
       winner: game.winnerId === null ? null : String(game.winnerId),
     });
@@ -82,7 +83,11 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
     const records = await db.listDarts(game.id);
     const view = getGameView({
-      config: { startScore: game.mode, players: game.players.map((p) => String(p.id)) },
+      config: {
+        startScore: game.mode,
+        players: game.players.map((p) => String(p.id)),
+        doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
+      },
       darts: records.map(toEngineDart),
     });
     const remaining: Record<string, number> = {};

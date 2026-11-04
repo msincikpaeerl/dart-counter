@@ -24,10 +24,15 @@ The dart is saved on the server at once and the scores update. After three darts
 
 ## Finishing a game
 
-Each game is played with a _double out_: you must reach exactly 0 with a double (or the bull).
+Each player is judged by their own finishing rule, set on their profile (see [Managing players](players.md)):
 
-- When your remaining score is 170 or less and a finish is possible with the darts you have left, a green **Finish** banner shows the darts to aim for, for example _T15 · D18_. The first target blinks on the board or on the keypad; the other targets have a white outline.
-- **Bust**: if a dart takes you below 0, leaves you on 1, or reaches 0 without a double, the whole turn scores nothing. Your score goes back to what it was at the start of the turn, a red message tells you so, and the turn passes to the next player.
+- **Simple out** (the default): you win with any dart, single, double, triple or bull, that brings your score exactly to 0. Leaving 1 is not a problem.
+- **Double out forcé**: you only win with a double or the bull that brings your score exactly to 0.
+
+The top bar shows the rule of the player whose turn it is (_Simple out_ or _Double out_).
+
+- When a finish is possible with the darts you have left (a score of 180 or less in simple out, 170 or less in double out), a green **Finish** banner shows the darts to aim for, for example _T15 · D18_. It matches the rule of the player whose turn it is: in simple out the last target can be a single or a triple. The first target blinks on the board or on the keypad; the other targets have a white outline.
+- **Bust**: if a dart takes you below 0 the whole turn scores nothing. For a player with **Double out forcé**, leaving 1, or reaching 0 without a double, is a bust too. After a bust, your score goes back to what it was at the start of the turn, a red message tells you so, and the turn passes to the next player.
 - When someone checks out, a **Game shot !** window shows the winner. Press **Rejouer** to start a new game with the same players and the same type of game (301 or 501). The order of play is drawn again at random.
 
 ## Correcting a mistake
@@ -51,4 +56,4 @@ When a finish is suggested, the first target blinks on the keypad: the number ke
 
 ## When no finish is shown
 
-No finish is suggested when your score is above 170, when it is a "bogey" number that cannot be checked out in three darts (such as 169 or 159), or when you do not have enough darts left in the turn. The banner then says so, or invites you to score.
+No finish is suggested when your score is above 170 (180 in simple out), when it is a "bogey" number that cannot be checked out in three darts (such as 169 or 159 in double out, 163 or 166 in simple out), or when you do not have enough darts left in the turn. The banner then says so, or invites you to score.
