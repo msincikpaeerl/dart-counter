@@ -132,7 +132,7 @@ describe('games API', () => {
 
   it('serves the setup page and the game page', async () => {
     const setup = await app.inject({ method: 'GET', url: '/' });
-    expect(setup.body).toContain('Tirer au sort');
+    expect(setup.body).toContain('Start X01');
     expect(setup.body).toContain('Modifier la sélection');
     expect(setup.body).toContain('Relancer');
     expect(setup.body).toContain('C’est parti');

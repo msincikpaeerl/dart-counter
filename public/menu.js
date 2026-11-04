@@ -101,11 +101,7 @@
       button.setAttribute('aria-pressed', String(Number(button.dataset.hp) === hitPoints));
     });
     $('battle-options').hidden = !battle;
-    $('draw-label').textContent = battle
-      ? 'Former les équipes · ' + hitPoints + ' PV'
-      : atw
-        ? 'Tirer au sort · ' + optionsLabel({ type: gameType, level: level })
-        : 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
+    $('draw-label').textContent = 'Start ' + (battle ? 'Bataille' : atw ? 'Tour du monde' : 'X01');
     renderCount();
   }
 
