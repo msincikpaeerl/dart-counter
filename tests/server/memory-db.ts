@@ -23,10 +23,12 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
   const results = new Map<number, { winnerId: number; finishedAt: string }>();
 
   return {
-    async createGame(mode, playerIds) {
+    async createGame(mode, playerIds, options = {}) {
       const game: Game = {
         id: games.length + 1,
+        type: 'x01',
         mode,
+        doubleOut: options.doubleOut ?? false,
         status: 'in_progress',
         players: playerIds.map((id) => {
           const found = players.find((p) => p.id === id);

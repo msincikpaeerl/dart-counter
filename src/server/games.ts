@@ -13,12 +13,20 @@ import {
 import type { DartRecord, Database, Game } from './db.js';
 import { present } from './players.js';
 
+/** Players who must finish on a double: the whole game when it is set so, else those who force it. */
+export function doubleOutPlayerIds(game: Game): string[] {
+  return game.players.filter((p) => game.doubleOut || p.doubleOut).map((p) => String(p.id));
+}
+
 function presentGame(game: Game) {
   return {
     id: game.id,
+    type: game.type,
     mode: game.mode,
+    doubleOut: game.doubleOut,
     status: game.status,
-    players: game.players.map(present),
+    // `doubleOut` of a player is the finish that really applies to them in this game.
+    players: game.players.map((p) => ({ ...present(p), doubleOut: game.doubleOut || p.doubleOut })),
   };
 }
 
@@ -38,7 +46,7 @@ function stateOf(game: Game, records: DartRecord[]): GameState {
     ...createGame({
       startScore: game.mode,
       players: game.players.map((p) => String(p.id)),
-      doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
+      doubleOutPlayers: doubleOutPlayerIds(game),
     }),
     darts: records.map(toEngineDart),
   };
@@ -72,7 +80,7 @@ function presentState(game: Game, records: DartRecord[]) {
       ? suggestCheckout(
           remaining[String(currentPlayerId)] as number,
           view.dartsLeft,
-          game.players.find((p) => p.id === currentPlayerId)?.doubleOut ?? false,
+          doubleOutPlayerIds(game).includes(String(currentPlayerId)),
         )
       : null;
   const justBust = !open && lastVisit?.bust ? lastVisit : null;
@@ -170,15 +178,24 @@ function shuffled<T>(items: readonly T[]): T[] {
 }
 
 interface CreateBody {
+  type?: unknown;
+  /** X01 options. */
   mode?: unknown;
+  doubleOut?: unknown;
   playerIds?: unknown;
 }
 
 export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Body: CreateBody }>('/api/games', async (request, reply) => {
-    const { mode, playerIds } = request.body ?? {};
-    if (mode !== 301 && mode !== 501) {
-      return reply.code(400).send({ error: 'Choisissez 301 ou 501.' });
+    const { type = 'x01', mode, doubleOut = false, playerIds } = request.body ?? {};
+    if (type !== 'x01') {
+      return reply.code(400).send({ error: 'Type de partie inconnu.' });
+    }
+    if (mode !== 301 && mode !== 501 && mode !== 701) {
+      return reply.code(400).send({ error: 'Choisissez 301, 501 ou 701.' });
+    }
+    if (typeof doubleOut !== 'boolean') {
+      return reply.code(400).send({ error: 'Choisissez simple out ou double out.' });
     }
     if (
       !Array.isArray(playerIds) ||
@@ -195,7 +212,7 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
         return reply.code(400).send({ error: 'Un des joueurs choisis n’est plus disponible.' });
       }
     }
-    const game = await db.createGame(mode, ids);
+    const game = await db.createGame(mode, ids, { doubleOut });
     return reply.code(201).send(presentGame(game));
   });
 
@@ -278,7 +295,9 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Params: { id: string } }>('/api/games/:id/rematch', async (request, reply) => {
     const game = await load(request.params.id);
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
-    const next = await db.createGame(game.mode, shuffled(game.players.map((player) => player.id)));
+    const next = await db.createGame(game.mode, shuffled(game.players.map((player) => player.id)), {
+      doubleOut: game.doubleOut,
+    });
     return reply.code(201).send(presentGame(next));
   });
 }

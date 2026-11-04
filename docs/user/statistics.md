@@ -24,7 +24,7 @@ Under the figures, the page lists the finished games of this player.
 
 ## The game history
 
-The **Historique** tab lists all finished games, the most recent first. Each line shows the **date and time**, the **mode** (301 or 501), the **players** and the **winner**.
+The **Historique** tab lists all finished games, the most recent first. Each line shows the **date and time**, the **type and options** of the game (for example “X01 · 501 · Simple out”), the **players** and the **winner**.
 
 Press a game to open it. It shows every visit in order: the round, who threw, the three darts (for example _T20 · T19 · D2_), the points scored and the score left. A bust visit is shown in red with the word « Bust » and scores 0; the winning visit is shown in green. The back arrow returns to the list you came from.
 

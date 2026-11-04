@@ -10,7 +10,9 @@
 
   var players = [];
   var selected = []; // player ids, in the order they were ticked
-  var mode = 501;
+  var gameType = 'x01'; // the only type for now; its options are shown below it
+  var mode = 501; // X01 option: starting score
+  var doubleOut = false; // X01 option: finish (simple out by default)
   var drawn = null; // array of players in play order, or null when the overlay is closed
   var drawCount = 0;
 
@@ -64,10 +66,16 @@
   }
 
   function renderModes() {
-    document.querySelectorAll('.mode').forEach(function (button) {
+    document.querySelectorAll('#modes .mode').forEach(function (button) {
       button.setAttribute('aria-pressed', String(Number(button.dataset.mode) === mode));
     });
-    $('draw-label').textContent = 'Tirer au sort · ' + mode;
+    document.querySelectorAll('#finishes .mode').forEach(function (button) {
+      button.setAttribute(
+        'aria-pressed',
+        String((button.dataset.doubleOut === 'true') === doubleOut),
+      );
+    });
+    $('draw-label').textContent = 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
   }
 
   function renderCount() {
@@ -193,7 +201,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          type: gameType,
           mode: mode,
+          doubleOut: doubleOut,
           playerIds: drawn.map(function (p) {
             return p.id;
           }),
@@ -215,9 +225,20 @@
     startButton.disabled = false;
   }
 
-  document.querySelectorAll('.mode').forEach(function (button) {
+  document.querySelectorAll('#game-types .mode').forEach(function (button) {
+    button.addEventListener('click', function () {
+      gameType = button.dataset.type;
+    });
+  });
+  document.querySelectorAll('#modes .mode').forEach(function (button) {
     button.addEventListener('click', function () {
       mode = Number(button.dataset.mode);
+      renderModes();
+    });
+  });
+  document.querySelectorAll('#finishes .mode').forEach(function (button) {
+    button.addEventListener('click', function () {
+      doubleOut = button.dataset.doubleOut === 'true';
       renderModes();
     });
   });
@@ -240,7 +261,8 @@
 
   function showUnfinished(game) {
     unfinishedId = game.id;
-    $('resume-mode').textContent = String(game.mode);
+    $('resume-mode').textContent =
+      'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
     $('resume-summary').textContent =
       game.players
         .map(function (p) {

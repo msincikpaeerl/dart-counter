@@ -26,12 +26,34 @@
 
         <section class="block">
           <h2>Type de partie</h2>
-          <div class="modes" id="modes">
-            <button type="button" class="mode" data-mode="301" aria-pressed="false">
-              <span class="mode-num">301</span><span class="mode-sub">Double out</span>
+          <div class="modes" id="game-types">
+            <button type="button" class="mode" data-type="x01" aria-pressed="true">
+              <span class="mode-num">X01</span><span class="mode-sub">301 · 501 · 701</span>
             </button>
-            <button type="button" class="mode" data-mode="501" aria-pressed="true">
-              <span class="mode-num">501</span><span class="mode-sub">Double out</span>
+          </div>
+        </section>
+
+        <section class="block" id="x01-options" aria-label="Options X01">
+          <h2>Options</h2>
+          <h3>Score de départ</h3>
+          <div class="modes three" id="modes">
+            <button type="button" class="mode compact" data-mode="301" aria-pressed="false">
+              <span class="mode-num">301</span>
+            </button>
+            <button type="button" class="mode compact" data-mode="501" aria-pressed="true">
+              <span class="mode-num">501</span>
+            </button>
+            <button type="button" class="mode compact" data-mode="701" aria-pressed="false">
+              <span class="mode-num">701</span>
+            </button>
+          </div>
+          <h3>Finish</h3>
+          <div class="modes finish" id="finishes">
+            <button type="button" class="mode" data-double-out="false" aria-pressed="true">
+              Simple out
+            </button>
+            <button type="button" class="mode" data-double-out="true" aria-pressed="false">
+              Double out
             </button>
           </div>
         </section>

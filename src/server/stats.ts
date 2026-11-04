@@ -6,7 +6,7 @@ import {
   type FinishedGameInput,
 } from '../scoring/index.js';
 import type { Database, FinishedGame, Player } from './db.js';
-import { dartLabel, toEngineDart } from './games.js';
+import { dartLabel, doubleOutPlayerIds, toEngineDart } from './games.js';
 import { present } from './players.js';
 
 /** Only finished games are ever read here: abandoned and unfinished ones are left out. */
@@ -18,7 +18,7 @@ async function loadFinished(db: Database) {
     inputs.set(game.id, {
       startScore: game.mode,
       players: game.players.map((p) => String(p.id)),
-      doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
+      doubleOutPlayers: doubleOutPlayerIds(game),
       darts: records.map(toEngineDart),
       winner: game.winnerId === null ? null : String(game.winnerId),
     });
@@ -34,7 +34,9 @@ function presentHistoryItem(game: FinishedGame) {
   const winner = game.players.find((p) => p.id === game.winnerId) ?? null;
   return {
     id: game.id,
+    type: game.type,
     mode: game.mode,
+    doubleOut: game.doubleOut,
     finishedAt: game.finishedAt,
     players: game.players.map(presentPlayer),
     winner: winner ? presentPlayer(winner) : null,
@@ -86,7 +88,7 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
       config: {
         startScore: game.mode,
         players: game.players.map((p) => String(p.id)),
-        doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
+        doubleOutPlayers: doubleOutPlayerIds(game),
       },
       darts: records.map(toEngineDart),
     });
