@@ -1,4 +1,4 @@
-import { dartValue, type Dart } from './x01.js';
+import { dartValue, isBust, type Dart } from './x01.js';
 
 export const DARTS_PER_VISIT = 3;
 
@@ -7,6 +7,8 @@ export interface GameConfig {
   startScore: number;
   /** Player ids in throwing order. */
   players: readonly string[];
+  /** Ids of the players who must finish on a double. Everyone else finishes with any dart. */
+  doubleOutPlayers?: readonly string[];
 }
 
 /** A game is its configuration plus every dart thrown so far, in order. */
@@ -62,7 +64,7 @@ export function getGameView(state: GameState): GameView {
     const before = remaining[player] as number;
     const after = before - current.darts.reduce((sum, d) => sum + dartValue(d), 0);
 
-    if (after < 0 || after === 1 || (after === 0 && dart.multiplier !== 2)) {
+    if (isBust(after, dart, state.config.doubleOutPlayers?.includes(player) ?? false)) {
       current.bust = true;
     } else if (after === 0) {
       current.finished = true;

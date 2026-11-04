@@ -203,7 +203,7 @@
       node = el(
         'div',
         'hint',
-        remaining <= 170
+        remaining <= (current.doubleOut ? 170 : 180)
           ? 'Pas de finish possible avec ' +
               state.dartsLeft +
               ' fléchette' +
@@ -338,7 +338,7 @@
     );
     var remaining = state.remaining[current.id];
 
-    $('mode').textContent = state.mode + ' · Double out';
+    $('mode').textContent = state.mode + (current.doubleOut ? ' · Double out' : ' · Simple out');
     $('round').textContent = 'Manche ' + state.round;
     $('undo').disabled = !state.canUndo;
 

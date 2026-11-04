@@ -4,7 +4,7 @@ The home page of Dart Counter is the game setup screen. You choose the type of g
 
 ## Choose the game
 
-1. Press **301** or **501**. Both are played with a _double out_: you must finish on a double or on the bull. 501 is selected at first.
+1. Press **301** or **501**. In both, each player finishes by reaching exactly 0 with any dart (_simple out_), unless the option **Double out forcé** is set on their profile: that player must finish on a double or on the bull (see [Managing players](players.md)). 501 is selected at first.
 2. In the **Joueurs** list, tap each person who plays. A red tick appears and the row gets a cream border. Tap again to untick. You can play alone: one player is enough.
 3. The counter at the top right of the list shows how many players are selected.
 

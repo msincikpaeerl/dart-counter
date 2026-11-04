@@ -35,7 +35,11 @@ export function dartLabel(dart: Dart): string {
 
 function stateOf(game: Game, records: DartRecord[]): GameState {
   return {
-    ...createGame({ startScore: game.mode, players: game.players.map((p) => String(p.id)) }),
+    ...createGame({
+      startScore: game.mode,
+      players: game.players.map((p) => String(p.id)),
+      doubleOutPlayers: game.players.filter((p) => p.doubleOut).map((p) => String(p.id)),
+    }),
     darts: records.map(toEngineDart),
   };
 }
@@ -65,7 +69,11 @@ function presentState(game: Game, records: DartRecord[]) {
 
   const checkout =
     currentPlayerId !== null
-      ? suggestCheckout(remaining[String(currentPlayerId)] as number, view.dartsLeft)
+      ? suggestCheckout(
+          remaining[String(currentPlayerId)] as number,
+          view.dartsLeft,
+          game.players.find((p) => p.id === currentPlayerId)?.doubleOut ?? false,
+        )
       : null;
   const justBust = !open && lastVisit?.bust ? lastVisit : null;
 

@@ -17,7 +17,9 @@ function play(state: GameState, ...darts: Dart[]): GameState {
   return darts.reduce(throwDart, state);
 }
 
-const newGame = (start = 501) => createGame({ startScore: start, players: ['A', 'B'] });
+/** Both players must finish on a double, unless told otherwise. */
+const newGame = (start = 501, doubleOutPlayers: string[] = ['A', 'B']) =>
+  createGame({ startScore: start, players: ['A', 'B'], doubleOutPlayers });
 
 describe('game flow', () => {
   it('passes the turn after three darts and scores the visit', () => {
@@ -88,6 +90,48 @@ describe('double out', () => {
   it('lets the other player win after a failed visit', () => {
     const view = getGameView(play(newGame(32), S(1), S(1), S(1), D(16)));
     expect(view.winner).toBe('B');
+  });
+});
+
+describe('simple out (default)', () => {
+  it('wins with a single, a treble, a double or the bull that reaches 0', () => {
+    for (const [start, dart] of [
+      [20, S(20)],
+      [60, T(20)],
+      [40, D(20)],
+      [50, BULL],
+      [25, S(25)],
+    ] as const) {
+      const view = getGameView(play(newGame(start, []), dart));
+      expect(view.winner).toBe('A');
+      expect(view.remaining.A).toBe(0);
+    }
+  });
+
+  it('is the rule when no double-out list is given', () => {
+    const state = createGame({ startScore: 20, players: ['A'] });
+    expect(getGameView(play(state, S(20))).winner).toBe('A');
+  });
+
+  it('does not bust on 1 left, and busts only below 0', () => {
+    const one = getGameView(play(newGame(40, []), S(20), S(19)));
+    expect(one.remaining.A).toBe(1);
+    expect(one.visits[0]?.bust).toBe(false);
+    const below = getGameView(play(newGame(40, []), T(20)));
+    expect(below.visits[0]).toMatchObject({ bust: true, scored: 0 });
+  });
+});
+
+describe('mixed players', () => {
+  it('judges each player by their own option', () => {
+    // A is simple out, B must finish on a double; both reach 0 with a single.
+    const config = (state: GameState) => getGameView(state);
+    const first = config(play(newGame(20, ['B']), S(20)));
+    expect(first.winner).toBe('A');
+    const second = config(play(newGame(20, ['B']), S(1), S(1), S(1), S(20)));
+    expect(second.winner).toBeNull();
+    expect(second.visits[1]).toMatchObject({ player: 'B', bust: true });
+    expect(second.currentPlayer).toBe('A');
   });
 });
 

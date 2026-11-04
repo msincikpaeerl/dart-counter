@@ -12,12 +12,14 @@ export function present(player: Player) {
     name: player.name,
     nickname: player.nickname,
     photoUrl: player.photoPath ? `/uploads/${player.photoPath}` : null,
+    doubleOut: player.doubleOut,
   };
 }
 
 interface Form {
   name: string;
   nickname: string | null;
+  doubleOut: boolean;
   photo: Buffer | null;
   removePhoto: boolean;
 }
@@ -25,7 +27,13 @@ interface Form {
 class FormError extends Error {}
 
 async function readForm(request: FastifyRequest): Promise<Form> {
-  const form: Form = { name: '', nickname: null, photo: null, removePhoto: false };
+  const form: Form = {
+    name: '',
+    nickname: null,
+    doubleOut: false,
+    photo: null,
+    removePhoto: false,
+  };
   for await (const part of request.parts({ limits: { fileSize: MAX_PHOTO_BYTES, files: 1 } })) {
     if (part.type === 'file') {
       const data = await part.toBuffer();
@@ -35,6 +43,8 @@ async function readForm(request: FastifyRequest): Promise<Form> {
       form.name = String(part.value).trim();
     } else if (part.fieldname === 'nickname') {
       form.nickname = String(part.value).trim() || null;
+    } else if (part.fieldname === 'doubleOut') {
+      form.doubleOut = part.value === '1';
     } else if (part.fieldname === 'removePhoto') {
       form.removePhoto = part.value === '1';
     }
@@ -58,6 +68,7 @@ export function registerPlayerRoutes(app: FastifyInstance, db: Database, uploadD
         name: form.name,
         nickname: form.nickname,
         photoPath,
+        doubleOut: form.doubleOut,
       });
       return reply.code(201).send(present(player));
     } catch (error) {
@@ -80,6 +91,7 @@ export function registerPlayerRoutes(app: FastifyInstance, db: Database, uploadD
         name: form.name,
         nickname: form.nickname,
         photoPath,
+        doubleOut: form.doubleOut,
       });
       if (!player) {
         await deletePhoto(uploadDir, newPhoto);

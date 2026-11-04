@@ -44,7 +44,7 @@ describe('keypad input', () => {
   });
 
   it('finds the key and modifier to blink for each checkout target', () => {
-    const route = suggestCheckout(170, 3) as Dart[];
+    const route = suggestCheckout(170, 3, true) as Dart[];
     expect(route.map(formatDart).join(' ')).toBe('T20 T20 Bull');
     expect(keypad.keyFor(route[0] as Dart)).toEqual({ key: 20, modifier: 3 });
     expect(keypad.keyFor(route[2] as Dart)).toEqual({ key: 'bull', modifier: 1 });
@@ -53,17 +53,19 @@ describe('keypad input', () => {
   });
 
   it('every checkout target maps back to the same dart through the keypad', () => {
-    for (let score = 2; score <= 170; score++) {
-      for (const dart of suggestCheckout(score, 3) ?? []) {
-        const { key, modifier } = keypad.keyFor(dart);
-        expect(keypad.dartFor(key, modifier)).toEqual(dart);
+    for (const doubleOut of [true, false]) {
+      for (let score = 1; score <= 180; score++) {
+        for (const dart of suggestCheckout(score, 3, doubleOut) ?? []) {
+          const { key, modifier } = keypad.keyFor(dart);
+          expect(keypad.dartFor(key, modifier)).toEqual(dart);
+        }
       }
     }
   });
 
-  it('shows no suggestion above 170 or for bogey scores', () => {
-    expect(suggestCheckout(171, 3)).toBeNull();
-    expect(suggestCheckout(180, 3)).toBeNull();
-    expect(suggestCheckout(169, 3)).toBeNull();
+  it('shows no double-out suggestion above 170 or for bogey scores', () => {
+    expect(suggestCheckout(171, 3, true)).toBeNull();
+    expect(suggestCheckout(180, 3, true)).toBeNull();
+    expect(suggestCheckout(169, 3, true)).toBeNull();
   });
 });

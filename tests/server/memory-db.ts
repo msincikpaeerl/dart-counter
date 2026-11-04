@@ -98,7 +98,12 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     },
     async createPlayer(input) {
       assertUnique(input.name);
-      const player: Player = { id: nextId++, ...input, archived: false };
+      const player: Player = {
+        id: nextId++,
+        ...input,
+        doubleOut: input.doubleOut ?? false,
+        archived: false,
+      };
       players.push(player);
       return { ...player };
     },
@@ -109,6 +114,7 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
       player.name = changes.name;
       player.nickname = changes.nickname;
       if (changes.photoPath !== undefined) player.photoPath = changes.photoPath;
+      if (changes.doubleOut !== undefined) player.doubleOut = changes.doubleOut;
       return { ...player };
     },
     async archivePlayer(id) {
