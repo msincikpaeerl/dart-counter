@@ -9,9 +9,14 @@ import type { Database, FinishedGame, Player } from './db.js';
 import { dartLabel, doubleOutPlayerIds, toEngineDart } from './games.js';
 import { present } from './players.js';
 
+/** Statistics and history cover X01 games only: Bataille (teams) games are left out. */
+async function listFinishedX01(db: Database) {
+  return (await db.listFinishedGames()).filter((game) => game.type === 'x01');
+}
+
 /** Only finished games are ever read here: abandoned and unfinished ones are left out. */
 async function loadFinished(db: Database) {
-  const games = await db.listFinishedGames();
+  const games = await listFinishedX01(db);
   const inputs = new Map<number, FinishedGameInput>();
   for (const game of games) {
     const records = await db.listDarts(game.id);
@@ -71,7 +76,7 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
 
   app.get<{ Querystring: { playerId?: string } }>('/api/history', async (request) => {
     const filter = request.query.playerId === undefined ? null : Number(request.query.playerId);
-    const games = await db.listFinishedGames();
+    const games = await listFinishedX01(db);
     return games
       .filter((game) => filter === null || game.players.some((p) => p.id === filter))
       .map(presentHistoryItem);
@@ -80,7 +85,7 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
   app.get<{ Params: { id: string } }>('/api/history/:id', async (request, reply) => {
     const id = Number(request.params.id);
     const game = Number.isSafeInteger(id)
-      ? (await db.listFinishedGames()).find((g) => g.id === id)
+      ? (await listFinishedX01(db)).find((g) => g.id === id)
       : undefined;
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
     const records = await db.listDarts(game.id);

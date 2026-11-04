@@ -4,7 +4,7 @@ The home page of Dart Counter is the game setup screen. You choose the type of g
 
 ## Choose the game
 
-1. Under **Type de partie**, choose the kind of game. Only **X01** exists for now, and it is selected. Other types may be added later; the options below always belong to the type chosen.
+1. Under **Type de partie**, choose the kind of game: **X01** (selected at first) or **Bataille** (two teams, see [Bataille](#bataille-by-teams) below). The options below always belong to the type chosen.
 2. Under **Options**, set the X01 options:
    - **Score de départ**: **301**, **501** or **701**. 501 is selected at first.
    - **Finish**: **Simple out** (selected at first) or **Double out**. With simple out, a player finishes by reaching exactly 0 with any dart. With double out, every player must finish on a double or on the bull; any other last dart is a bust and the turn is cancelled.
@@ -27,6 +27,18 @@ You cannot place players by hand: the order is always drawn by chance.
 - **C’est parti**: creates the game with this order and opens the game page.
 
 If the game cannot be created (for example the network is down), a red message appears in the window and you can press **C’est parti** again.
+
+## Bataille (by teams)
+
+Bataille is played by two teams. Each team starts with the same number of hit points (**points de vie**, PV). The points scored by a player in a turn are taken off the hit points of the **other** team. The first team to be brought down to 0 loses.
+
+1. Choose **Bataille** under **Type de partie**. Under **Options**, pick the **Points de vie** of each team: **500** (selected at first), **1000** or **2000**.
+2. Tick the players who take part: at least **two** are needed, so that each team has one.
+3. Press **Former les équipes**. The window **Équipes** splits the players into **Équipe 1** and **Équipe 2** at random, with as many players on each side as possible. Tap a player to move them to the other team. **Relancer** draws a new split.
+4. Each team must have at least one player: if not, a red message asks you to fix it when you press **C’est parti**.
+5. **C’est parti** creates the game. **Modifier la sélection** closes the window.
+
+Players of the two teams throw one after the other: a player of team 1, then one of team 2, and so on. Inside a team the players take turns in the order shown. How the game is played and won is described in [Playing a game](playing.md#bataille).
 
 ## The game page
 

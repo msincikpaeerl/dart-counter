@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- New type of game: **Bataille**, played by two teams. Pick **Bataille** and the **points de vie** (500, 1000 or 2000), tick at least two players and split them into two teams (random split you can adjust). Teams throw in turn, the score of a turn is taken off the other team's hit points, both teams' hit points are always visible, and the first team down to zero loses; the game can be resumed or abandoned like any other. Bataille games are not counted in the X01 statistics; see [Starting a game](docs/user/new-game.md) and [Playing a game](docs/user/playing.md).
+
 - New game setup in two steps: choose the **type de partie** (X01 for now), then its options: starting score **301, 501 or 701** and the **finish**, simple out (default) or double out. The finish applies to every player, except those with **Double out forcé** on their profile. The type and options are shown on the game screen, in the history and when resuming a game; games already saved are unchanged (simple out) and stay playable; see [Starting a game](docs/user/new-game.md) and [Resuming or abandoning a game](docs/user/resume-game.md).
 
 - Games are now **simple out** by default: any dart that brings the score exactly to zero wins. A new **Double out forcé** option on the player create/edit screen makes a player finish on a double or the bull only (leaving 1 or reaching zero otherwise is a bust). Each player is judged by their own option and checkout suggestions follow it; existing players are simple out; see [Managing players](docs/user/players.md) and [Playing a game](docs/user/playing.md).

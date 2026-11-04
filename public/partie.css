@@ -167,6 +167,64 @@
   white-space: nowrap;
 }
 
+.battle-teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.battle-team {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #1c1c1c;
+  border: 2px solid #262626;
+}
+
+.battle-team.playing {
+  border-color: var(--red);
+}
+
+.battle-team.won {
+  border-color: var(--cream);
+}
+
+.battle-team.down {
+  opacity: 0.6;
+}
+
+.battle-team-name {
+  color: var(--cream);
+  font-weight: 700;
+}
+
+.battle-hp {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.battle-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #2c2c2c;
+  overflow: hidden;
+}
+
+.battle-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--red);
+}
+
+.battle-members {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
 .others h2 {
   display: none;
 }

@@ -85,4 +85,16 @@ ALTER TABLE games ADD COLUMN game_type text NOT NULL DEFAULT 'x01' CHECK (game_t
 ALTER TABLE games ADD COLUMN double_out boolean NOT NULL DEFAULT false;
 `,
   },
+  {
+    name: '0004_battle_game_type',
+    sql: `
+-- Battle (two teams): "mode" is the starting hit points of each team (500, 1000 or 2000) and
+-- game_players.team tells which team (1 or 2) a player is in. It stays empty for X01 games.
+ALTER TABLE games DROP CONSTRAINT games_mode_check;
+ALTER TABLE games ADD CONSTRAINT games_mode_check CHECK (mode IN (301, 501, 701, 500, 1000, 2000));
+ALTER TABLE games DROP CONSTRAINT games_game_type_check;
+ALTER TABLE games ADD CONSTRAINT games_game_type_check CHECK (game_type IN ('x01', 'battle'));
+ALTER TABLE game_players ADD COLUMN team smallint CHECK (team IN (1, 2));
+`,
+  },
 ];

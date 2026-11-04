@@ -26,8 +26,9 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
     async createGame(mode, playerIds, options = {}) {
       const game: Game = {
         id: games.length + 1,
-        type: 'x01',
+        type: options.teams ? 'battle' : 'x01',
         mode,
+        teams: options.teams ?? null,
         doubleOut: options.doubleOut ?? false,
         status: 'in_progress',
         players: playerIds.map((id) => {

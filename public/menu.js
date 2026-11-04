@@ -10,9 +10,11 @@
 
   var players = [];
   var selected = []; // player ids, in the order they were ticked
-  var gameType = 'x01'; // the only type for now; its options are shown below it
+  var gameType = 'x01'; // 'x01' or 'battle'; the options of the type are shown below it
   var mode = 501; // X01 option: starting score
   var doubleOut = false; // X01 option: finish (simple out by default)
+  var hitPoints = 500; // Battle option: hit points of each team
+  var teams = null; // Battle: [[players of team 1], [players of team 2]], or null when closed
   var drawn = null; // array of players in play order, or null when the overlay is closed
   var drawCount = 0;
 
@@ -75,13 +77,25 @@
         String((button.dataset.doubleOut === 'true') === doubleOut),
       );
     });
-    $('draw-label').textContent = 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
+    document.querySelectorAll('#game-types .mode').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.type === gameType));
+    });
+    document.querySelectorAll('#hit-points .mode').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.hp) === hitPoints));
+    });
+    var battle = gameType === 'battle';
+    $('x01-options').hidden = battle;
+    $('battle-options').hidden = !battle;
+    $('draw-label').textContent = battle
+      ? 'Former les équipes · ' + hitPoints + ' PV'
+      : 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
+    renderCount();
   }
 
   function renderCount() {
     var n = selected.length;
     $('sel-count').textContent = n + (n > 1 ? ' sélectionnés' : ' sélectionné');
-    drawButton.disabled = n < 1;
+    drawButton.disabled = n < (gameType === 'battle' ? 2 : 1);
   }
 
   function renderPlayers() {
@@ -173,10 +187,115 @@
     $('draw-count').textContent = 'Tirage n° ' + drawCount;
   }
 
-  function draw() {
-    var chosen = players.filter(function (p) {
+  // ---------- Battle: split the players into two teams ----------
+
+  function chosenPlayers() {
+    return players.filter(function (p) {
       return selected.indexOf(p.id) >= 0;
     });
+  }
+
+  /** Random split of the chosen players into two teams that differ by at most one player. */
+  function splitTeams() {
+    var mixed = shuffle(chosenPlayers());
+    var half = Math.ceil(mixed.length / 2);
+    teams = [mixed.slice(0, half), mixed.slice(half)];
+    renderTeams();
+  }
+
+  function renderTeams() {
+    var columns = teams.map(function (members, index) {
+      var column = document.createElement('div');
+      column.className = 'team';
+      var title = document.createElement('h3');
+      title.textContent = 'Équipe ' + (index + 1);
+      column.appendChild(title);
+      var list = document.createElement('ol');
+      list.className = 'order';
+      members.forEach(function (player) {
+        var row = document.createElement('li');
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('aria-label', player.name + ' : changer d’équipe');
+        button.appendChild(buildAvatar(player));
+        var name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = player.name;
+        button.appendChild(name);
+        button.addEventListener('click', function () {
+          teams[index].splice(teams[index].indexOf(player), 1);
+          teams[1 - index].push(player);
+          renderTeams();
+        });
+        row.appendChild(button);
+        list.appendChild(row);
+      });
+      column.appendChild(list);
+      return column;
+    });
+    $('teams').replaceChildren.apply($('teams'), columns);
+    $('teams-hp').textContent = hitPoints + ' PV chacune';
+    $('teams-error').hidden = true;
+  }
+
+  function openTeams() {
+    if (chosenPlayers().length < 2) return;
+    splitTeams();
+    $('teams-overlay').hidden = false;
+    $('start-battle').focus();
+  }
+
+  function closeTeams() {
+    teams = null;
+    $('teams-overlay').hidden = true;
+    drawButton.focus();
+  }
+
+  async function startBattle() {
+    if (!teams) return;
+    var error = $('teams-error');
+    if (teams[0].length < 1 || teams[1].length < 1) {
+      error.textContent = 'Chaque équipe doit avoir au moins un joueur.';
+      error.hidden = false;
+      return;
+    }
+    error.hidden = true;
+    $('start-battle').disabled = true;
+    try {
+      var response = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'battle',
+          mode: hitPoints,
+          teams: teams.map(function (members) {
+            return members.map(function (p) {
+              return p.id;
+            });
+          }),
+        }),
+      });
+      var body = await response.json().catch(function () {
+        return {};
+      });
+      if (response.ok) {
+        window.location.href = '/partie/' + body.id;
+        return;
+      }
+      error.textContent = body.error || 'La partie n’a pas pu être créée. Réessayez.';
+    } catch {
+      error.textContent = 'Impossible de joindre le serveur. Vérifiez la connexion et réessayez.';
+    }
+    error.hidden = false;
+    $('start-battle').disabled = false;
+  }
+
+  function draw() {
+    if (gameType === 'battle') {
+      openTeams();
+      return;
+    }
+    var chosen = chosenPlayers();
     if (chosen.length < 1) return;
     drawn = shuffle(chosen);
     drawCount += 1;
@@ -228,8 +347,18 @@
   document.querySelectorAll('#game-types .mode').forEach(function (button) {
     button.addEventListener('click', function () {
       gameType = button.dataset.type;
+      renderModes();
     });
   });
+  document.querySelectorAll('#hit-points .mode').forEach(function (button) {
+    button.addEventListener('click', function () {
+      hitPoints = Number(button.dataset.hp);
+      renderModes();
+    });
+  });
+  $('reteam').addEventListener('click', splitTeams);
+  $('close-teams').addEventListener('click', closeTeams);
+  $('start-battle').addEventListener('click', startBattle);
   document.querySelectorAll('#modes .mode').forEach(function (button) {
     button.addEventListener('click', function () {
       mode = Number(button.dataset.mode);
@@ -248,10 +377,12 @@
   startButton.addEventListener('click', start);
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && drawn) closeOverlay();
+    if (event.key === 'Escape' && teams) closeTeams();
   });
   // Coming back with the browser's back button must not keep a stale disabled state.
   window.addEventListener('pageshow', function () {
     startButton.disabled = false;
+    $('start-battle').disabled = false;
     loadPlayers();
   });
 
@@ -261,14 +392,24 @@
 
   function showUnfinished(game) {
     unfinishedId = game.id;
-    $('resume-mode').textContent =
-      'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
-    $('resume-summary').textContent =
-      game.players
-        .map(function (p) {
-          return p.name + ' : ' + game.remaining[p.id];
-        })
-        .join(' · ') + '.';
+    if (game.type === 'battle') {
+      $('resume-mode').textContent = 'Bataille · ' + game.mode + ' PV';
+      $('resume-summary').textContent =
+        game.teams
+          .map(function (team) {
+            return 'Équipe ' + team.number + ' : ' + team.hitPoints + ' PV';
+          })
+          .join(' · ') + '.';
+    } else {
+      $('resume-mode').textContent =
+        'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
+      $('resume-summary').textContent =
+        game.players
+          .map(function (p) {
+            return p.name + ' : ' + game.remaining[p.id];
+          })
+          .join(' · ') + '.';
+    }
     $('resume-error').hidden = true;
     $('resume-overlay').hidden = false;
     $('resume').focus();

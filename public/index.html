@@ -30,6 +30,25 @@
             <button type="button" class="mode" data-type="x01" aria-pressed="true">
               <span class="mode-num">X01</span><span class="mode-sub">301 · 501 · 701</span>
             </button>
+            <button type="button" class="mode" data-type="battle" aria-pressed="false">
+              <span class="mode-num">Bataille</span><span class="mode-sub">Par équipes</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="block" id="battle-options" aria-label="Options Bataille" hidden>
+          <h2>Options</h2>
+          <h3>Points de vie</h3>
+          <div class="modes three" id="hit-points">
+            <button type="button" class="mode compact" data-hp="500" aria-pressed="true">
+              <span class="mode-num">500</span>
+            </button>
+            <button type="button" class="mode compact" data-hp="1000" aria-pressed="false">
+              <span class="mode-num">1000</span>
+            </button>
+            <button type="button" class="mode compact" data-hp="2000" aria-pressed="false">
+              <span class="mode-num">2000</span>
+            </button>
           </div>
         </section>
 
@@ -105,6 +124,23 @@
           <button type="button" id="start" class="btn-primary">C’est parti</button>
         </div>
         <button type="button" id="close" class="btn-link">Modifier la sélection</button>
+      </div>
+    </div>
+
+    <div id="teams-overlay" class="overlay" hidden>
+      <div class="dialog" role="dialog" aria-modal="true" aria-label="Répartition en équipes">
+        <div class="dialog-head">
+          <h2>Équipes</h2>
+          <span id="teams-hp" class="draw-count"></span>
+        </div>
+        <p class="muted">Touchez un joueur pour le changer d’équipe.</p>
+        <div id="teams" class="teams-columns"></div>
+        <p id="teams-error" class="error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" id="reteam" class="btn-secondary">Relancer</button>
+          <button type="button" id="start-battle" class="btn-primary">C’est parti</button>
+        </div>
+        <button type="button" id="close-teams" class="btn-link">Modifier la sélection</button>
       </div>
     </div>
 
