@@ -31,7 +31,12 @@ export class DuplicatePlayerNameError extends Error {
 /** A game with its players in play order (first to throw first). */
 export interface Game {
   id: number;
-  mode: 301 | 501;
+  /** The type of game; only X01 exists for now. */
+  type: 'x01';
+  /** X01 option: the starting score. */
+  mode: 301 | 501 | 701;
+  /** X01 option: finish on a double for every player (a player's own double out also applies). */
+  doubleOut: boolean;
   status: 'in_progress' | 'finished' | 'abandoned';
   players: Player[];
 }
@@ -73,7 +78,11 @@ export interface Database {
   /** Archives the player; returns null when the player does not exist. */
   archivePlayer(id: number): Promise<Player | null>;
   /** Creates a game; `playerIds` is the play order. Players must exist. */
-  createGame(mode: 301 | 501, playerIds: number[]): Promise<Game>;
+  createGame(
+    mode: Game['mode'],
+    playerIds: number[],
+    options?: { doubleOut?: boolean },
+  ): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
   /** Finished games only (never abandoned or in progress), most recent first. */
   listFinishedGames(): Promise<FinishedGame[]>;
@@ -130,10 +139,12 @@ export function createDatabase(databaseUrl: string): Database {
   }
 
   async function loadGame(id: number): Promise<Game | null> {
-    const game = await pool.query<{ id: number; mode: number; status: Game['status'] }>(
-      'SELECT id::int AS id, mode, status FROM games WHERE id = $1',
-      [id],
-    );
+    const game = await pool.query<{
+      id: number;
+      mode: number;
+      double_out: boolean;
+      status: Game['status'];
+    }>('SELECT id::int AS id, mode, double_out, status FROM games WHERE id = $1', [id]);
     const row = game.rows[0];
     if (!row) return null;
     const players = await pool.query<PlayerRow>(
@@ -144,7 +155,9 @@ export function createDatabase(databaseUrl: string): Database {
     );
     return {
       id: row.id,
-      mode: row.mode === 301 ? 301 : 501,
+      type: 'x01',
+      mode: row.mode === 301 ? 301 : row.mode === 701 ? 701 : 501,
+      doubleOut: row.double_out,
       status: row.status,
       players: players.rows.map(toPlayer),
     };
@@ -154,14 +167,15 @@ export function createDatabase(databaseUrl: string): Database {
     async ping() {
       await pool.query('SELECT 1');
     },
-    async createGame(mode, playerIds) {
+    async createGame(mode, playerIds, options = {}) {
       const client = await pool.connect();
       let gameId: number;
       try {
         await client.query('BEGIN');
         const inserted = await client.query<{ id: number }>(
-          'INSERT INTO games (mode) VALUES ($1) RETURNING id::int AS id',
-          [mode],
+          `INSERT INTO games (game_type, mode, double_out) VALUES ('x01', $1, $2)
+           RETURNING id::int AS id`,
+          [mode, options.doubleOut ?? false],
         );
         gameId = inserted.rows[0]?.id ?? 0;
         await client.query(

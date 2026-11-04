@@ -4,7 +4,7 @@ The game page opens when you press **C’est parti** (see [Starting a game](new-
 
 ## What you see
 
-- **The top bar** shows the game (for example _501 · Double out_) and the round (**Manche**). The arrow on the left leaves the game and goes back to the menu. **Annuler** undoes the last dart.
+- **The top bar** shows the game (for example _X01 · 701 · Double out_: the type of game, the starting score and the finish chosen for the game; when the game is simple out but some players have **Double out forcé**, their names are listed) and the round (**Manche**). The arrow on the left leaves the game and goes back to the menu. **Annuler** undoes the last dart.
 - **The player card** (red frame) belongs to the person who throws. It shows their name, their remaining score in large figures, the three darts of the current turn and the total of the turn.
 - **The other players** are listed below, in the order they will throw after the current player, with their remaining score and the score of their last turn.
 - **The board** fills the rest of the screen. The numbers 1 to 20 around it are shown in a light, bright, non-bold type so they stay easy to read on a phone; they are only labels, tapping a number itself does nothing special.
@@ -27,13 +27,13 @@ The dart is saved on the server at once and the scores update. After three darts
 Each player is judged by their own finishing rule, set on their profile (see [Managing players](players.md)):
 
 - **Simple out** (the default): you win with any dart, single, double, triple or bull, that brings your score exactly to 0. Leaving 1 is not a problem.
-- **Double out forcé**: you only win with a double or the bull that brings your score exactly to 0.
+- **Double out**: you only win with a double or the bull that brings your score exactly to 0. It is chosen for the whole game when you start it (see [Starting a game](new-game.md)), or forced for one player with **Double out forcé** on their profile.
 
 The top bar shows the rule of the player whose turn it is (_Simple out_ or _Double out_).
 
 - When a finish is possible with the darts you have left (a score of 180 or less in simple out, 170 or less in double out), a green **Finish** banner shows the darts to aim for, for example _T15 · D18_. It matches the rule of the player whose turn it is: in simple out the last target can be a single or a triple. The first target blinks on the board or on the keypad; the other targets have a white outline.
 - **Bust**: if a dart takes you below 0 the whole turn scores nothing. For a player with **Double out forcé**, leaving 1, or reaching 0 without a double, is a bust too. After a bust, your score goes back to what it was at the start of the turn, a red message tells you so, and the turn passes to the next player.
-- When someone checks out, a **Game shot !** window shows the winner. Press **Rejouer** to start a new game with the same players and the same type of game (301 or 501). The order of play is drawn again at random.
+- When someone checks out, a **Game shot !** window shows the winner. Press **Rejouer** to start a new game with the same players and the same type of game, starting score and finish. The order of play is drawn again at random.
 
 ## Correcting a mistake
 

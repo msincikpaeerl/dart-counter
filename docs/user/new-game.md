@@ -4,9 +4,15 @@ The home page of Dart Counter is the game setup screen. You choose the type of g
 
 ## Choose the game
 
-1. Press **301** or **501**. In both, each player finishes by reaching exactly 0 with any dart (_simple out_), unless the option **Double out forcé** is set on their profile: that player must finish on a double or on the bull (see [Managing players](players.md)). 501 is selected at first.
-2. In the **Joueurs** list, tap each person who plays. A red tick appears and the row gets a cream border. Tap again to untick. You can play alone: one player is enough.
-3. The counter at the top right of the list shows how many players are selected.
+1. Under **Type de partie**, choose the kind of game. Only **X01** exists for now, and it is selected. Other types may be added later; the options below always belong to the type chosen.
+2. Under **Options**, set the X01 options:
+   - **Score de départ**: **301**, **501** or **701**. 501 is selected at first.
+   - **Finish**: **Simple out** (selected at first) or **Double out**. With simple out, a player finishes by reaching exactly 0 with any dart. With double out, every player must finish on a double or on the bull; any other last dart is a bust and the turn is cancelled.
+
+   The finish you choose applies to all players of the game. A player who has the option **Double out forcé** on their profile (see [Managing players](players.md)) always has to double out, even when the game is set to simple out.
+
+3. In the **Joueurs** list, tap each person who plays. A red tick appears and the row gets a cream border. Tap again to untick. You can play alone: one player is enough.
+4. The counter at the top right of the list shows how many players are selected.
 
 Archived players are not in the list. If someone is missing, press **Créer un joueur** to add them (see [Managing players](players.md)).
 

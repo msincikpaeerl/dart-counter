@@ -192,13 +192,20 @@
 
   // ---------- History ----------
 
+  /** The type and options of a game, e.g. "X01 · 701 · Double out". */
+  function optionsLabel(game) {
+    return 'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
+  }
+
   function buildGameRow(game, back) {
     var item = el('li');
     var row = el('button', 'row');
     row.type = 'button';
     row.appendChild(el('div', 'mode-chip', String(game.mode)));
     var text = el('div', 'row-text');
-    text.appendChild(el('div', 'row-title', formatDate(game.finishedAt)));
+    text.appendChild(
+      el('div', 'row-title', optionsLabel(game) + ' · ' + formatDate(game.finishedAt)),
+    );
     text.appendChild(
       el(
         'div',
@@ -259,7 +266,9 @@
 
       var summary = $('game-summary');
       summary.replaceChildren();
-      summary.appendChild(el('div', 'row-title', game.mode + ' · ' + formatDate(game.finishedAt)));
+      summary.appendChild(
+        el('div', 'row-title', optionsLabel(game) + ' · ' + formatDate(game.finishedAt)),
+      );
       summary.appendChild(
         el(
           'div',

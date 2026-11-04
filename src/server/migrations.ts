@@ -73,4 +73,16 @@ CREATE INDEX darts_player_idx ON darts (player_id);
 ALTER TABLE players ADD COLUMN double_out boolean NOT NULL DEFAULT false;
 `,
   },
+  {
+    name: '0003_game_type_and_options',
+    sql: `
+-- A game has a type (only X01 for now) and options of that type. For X01, "mode" is the
+-- starting score (301, 501 or 701) and "double_out" is the finish chosen for the game.
+-- Existing games become X01 games with simple out (a player's own double out still applies).
+ALTER TABLE games DROP CONSTRAINT games_mode_check;
+ALTER TABLE games ADD CONSTRAINT games_mode_check CHECK (mode IN (301, 501, 701));
+ALTER TABLE games ADD COLUMN game_type text NOT NULL DEFAULT 'x01' CHECK (game_type IN ('x01'));
+ALTER TABLE games ADD COLUMN double_out boolean NOT NULL DEFAULT false;
+`,
+  },
 ];

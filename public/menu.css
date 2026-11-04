@@ -169,6 +169,40 @@ h2 {
   opacity: 0.85;
 }
 
+.modes.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.block h3 {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.85;
+}
+
+.modes .mode.compact {
+  min-height: 0;
+  padding: 14px 8px;
+}
+
+.compact .mode-num {
+  font-size: 34px;
+}
+
+.compact .mode-sub {
+  display: none;
+}
+
+.finish .mode {
+  min-height: 0;
+  padding: 16px 8px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
 .right {
   order: 2;
   flex: 1;

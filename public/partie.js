@@ -338,7 +338,25 @@
     );
     var remaining = state.remaining[current.id];
 
-    $('mode').textContent = state.mode + (current.doubleOut ? ' · Double out' : ' · Simple out');
+    // The finish shown is the game's; a player forced to double out is mentioned by name.
+    var forced = state.players.filter(function (p) {
+      return p.doubleOut;
+    });
+    $('mode').textContent =
+      'X01 · ' +
+      state.mode +
+      (state.doubleOut
+        ? ' · Double out'
+        : ' · Simple out' +
+          (forced.length > 0
+            ? ' (double out : ' +
+              forced
+                .map(function (p) {
+                  return p.name;
+                })
+                .join(', ') +
+              ')'
+            : ''));
     $('round').textContent = 'Manche ' + state.round;
     $('undo').disabled = !state.canUndo;
 

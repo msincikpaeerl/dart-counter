@@ -33,6 +33,14 @@ describe.skipIf(!databaseUrl)('unfinished and abandoned games (PostgreSQL)', () 
     await db.close();
   });
 
+  it('stores the type and options of a game (701, double out) and defaults to simple out', async () => {
+    const playerId = await newPlayerId();
+    const custom = await db.createGame(701, [playerId], { doubleOut: true });
+    expect(await db.getGame(custom.id)).toMatchObject({ type: 'x01', mode: 701, doubleOut: true });
+    const plain = await db.createGame(501, [playerId]);
+    expect(await db.getGame(plain.id)).toMatchObject({ type: 'x01', mode: 501, doubleOut: false });
+  });
+
   it('returns null when no game is in progress', async () => {
     expect(await db.getUnfinishedGame()).toBeNull();
   });
