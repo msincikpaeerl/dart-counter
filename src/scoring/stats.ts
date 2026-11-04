@@ -29,7 +29,34 @@ export interface PlayerStats {
   highestCheckout: number | null;
 }
 
+/** A finished game of any type, for the figures every type shares. */
+export interface FinishedResultInput {
+  /** Every player who took part. */
+  players: readonly string[];
+  /** Players who won: one for a solo game, the whole winning team for Bataille. */
+  winners: readonly string[];
+}
+
+/** Figures shared by every game type. */
+export interface WinStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  /** Share of games won, 0-100, rounded to one decimal; 0 without any game. */
+  winPercent: number;
+}
+
 const round1 = (value: number) => Math.round(value * 10) / 10;
+
+/** Games played and won by one player (all type-agnostic: callers pass one type and options). */
+export function computeWinStats(playerId: string, games: readonly FinishedResultInput[]): WinStats {
+  const played = games.filter((game) => game.players.includes(playerId));
+  const gamesWon = played.filter((game) => game.winners.includes(playerId)).length;
+  return {
+    gamesPlayed: played.length,
+    gamesWon,
+    winPercent: played.length === 0 ? 0 : round1((gamesWon / played.length) * 100),
+  };
+}
 
 /** Statistics of one player over the finished games he or she took part in. */
 export function computePlayerStats(

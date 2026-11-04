@@ -82,7 +82,33 @@
     gamesList.hidden = true;
     gameView.hidden = true;
     tabs.hidden = true;
+    typeFilter.hidden = true;
   }
+
+  var typeFilter = $('type-filter');
+  /** The game type the screen is filtered on ('' = all types). */
+  var currentType = '';
+  /** Reloads the current list when the filter changes. */
+  var reloadList = function () {};
+
+  function typeQuery(prefix) {
+    return currentType ? prefix + 'type=' + currentType : '';
+  }
+
+  function showFilter(reload) {
+    reloadList = reload;
+    typeFilter.hidden = false;
+    Array.prototype.forEach.call(typeFilter.querySelectorAll('.tab'), function (button) {
+      button.setAttribute('aria-pressed', String(button.getAttribute('data-type') === currentType));
+    });
+  }
+
+  Array.prototype.forEach.call(typeFilter.querySelectorAll('.tab'), function (button) {
+    button.addEventListener('click', function () {
+      currentType = button.getAttribute('data-type') || '';
+      reloadList();
+    });
+  });
 
   function setTab(name) {
     tabs.hidden = false;
@@ -95,12 +121,13 @@
   async function showPlayers() {
     reset();
     setTab('players');
+    showFilter(showPlayers);
     title.textContent = 'Statistiques';
     goBack = function () {
       window.location.href = '/';
     };
     try {
-      var entries = await getJson('/api/stats/players');
+      var entries = await getJson('/api/stats/players' + typeQuery('?'));
       playersList.replaceChildren.apply(playersList, entries.map(buildPlayerRow));
       playersList.hidden = false;
       if (entries.length === 0) {
@@ -118,12 +145,10 @@
     row.appendChild(buildAvatar(entry.player));
     var text = el('div', 'row-text');
     text.appendChild(el('div', 'row-title', entry.player.name));
-    var sub = entry.stats.gamesPlayed + (entry.stats.gamesPlayed > 1 ? ' parties' : ' partie');
-    if (entry.player.archived) sub += ' · archivé';
-    text.appendChild(el('div', 'row-sub', sub));
+    if (entry.player.archived) text.appendChild(el('div', 'row-sub', 'archivé'));
     row.appendChild(text);
-    var figure = el('div', 'row-figure', number(entry.stats.winPercent, 0) + ' %');
-    figure.appendChild(el('small', null, 'Victoires'));
+    var figure = el('div', 'row-figure', String(entry.gamesPlayed));
+    figure.appendChild(el('small', null, entry.gamesPlayed > 1 ? 'Parties' : 'Partie'));
     row.appendChild(figure);
     row.addEventListener('click', function () {
       showPlayer(entry.player.id);
@@ -145,36 +170,52 @@
     reset();
     title.textContent = 'Joueur';
     goBack = showPlayers;
+    showFilter(function () {
+      showPlayer(id);
+    });
     try {
-      var data = await getJson('/api/stats/players/' + id);
+      var data = await getJson('/api/stats/players/' + id + typeQuery('?'));
       var player = data.player;
-      var stats = data.stats;
       $('player-avatar').replaceChildren(buildAvatar(player, true));
       $('player-name').textContent = player.name;
       $('player-nickname').textContent = player.nickname ? '« ' + player.nickname + ' »' : '';
       $('player-archived').hidden = !player.archived;
 
-      var grid = $('stat-grid');
-      grid.replaceChildren();
-      addStat(grid, 'Parties jouées', String(stats.gamesPlayed));
-      addStat(grid, 'Parties gagnées', String(stats.gamesWon));
-      addStat(grid, '% de victoires', number(stats.winPercent, 1) + ' %');
-      addStat(
-        grid,
-        'Moyenne 3 fléchettes',
-        stats.threeDartAverage === null ? '–' : number(stats.threeDartAverage, 1),
-      );
-      addStat(grid, 'Meilleure volée', String(stats.bestVisit));
-      addStat(grid, '180', String(stats.count180));
-      addStat(grid, 'Volées à 100+', String(stats.visits100Plus));
-      addStat(
-        grid,
-        'Plus haut checkout',
-        stats.highestCheckout === null ? '–' : String(stats.highestCheckout),
-      );
+      // One block per type and combination of options: they are never added together.
+      var groupsBox = $('stat-groups');
+      groupsBox.replaceChildren();
+      data.groups.forEach(function (group) {
+        var stats = group.stats;
+        groupsBox.appendChild(el('h2', 'group-title', group.label));
+        var grid = el('dl', 'stat-grid');
+        addStat(grid, 'Parties jouées', String(stats.gamesPlayed));
+        addStat(grid, 'Parties gagnées', String(stats.gamesWon));
+        addStat(grid, '% de victoires', number(stats.winPercent, 1) + ' %');
+        if (group.type === 'x01') {
+          addStat(
+            grid,
+            'Moyenne 3 fléchettes',
+            stats.threeDartAverage === null ? '–' : number(stats.threeDartAverage, 1),
+          );
+          addStat(grid, 'Meilleure volée', String(stats.bestVisit));
+          addStat(grid, '180', String(stats.count180));
+          addStat(grid, 'Volées à 100+', String(stats.visits100Plus));
+          addStat(
+            grid,
+            'Plus haut checkout',
+            stats.highestCheckout === null ? '–' : String(stats.highestCheckout),
+          );
+        }
+        groupsBox.appendChild(grid);
+      });
+      if (data.groups.length === 0) {
+        groupsBox.appendChild(
+          el('p', 'muted', 'Aucune partie terminée de ce type pour ce joueur.'),
+        );
+      }
       playerView.hidden = false;
 
-      var games = await getJson('/api/history?playerId=' + id);
+      var games = await getJson('/api/history?playerId=' + id + typeQuery('&'));
       gamesList.replaceChildren.apply(
         gamesList,
         games.map(function (game) {
@@ -184,7 +225,9 @@
         }),
       );
       gamesList.hidden = false;
-      if (games.length === 0) showMessage('Aucune partie terminée pour ce joueur.');
+      if (games.length === 0 && !currentType) {
+        showMessage('Aucune partie terminée pour ce joueur.');
+      }
     } catch {
       showMessage('Impossible de charger ce joueur.');
     }
@@ -194,14 +237,20 @@
 
   /** The type and options of a game, e.g. "X01 · 701 · Double out". */
   function optionsLabel(game) {
-    return 'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
+    return game.typeLabel + ' · ' + game.options;
+  }
+
+  var TYPE_CHIPS = { x01: null, around_the_world: 'TdM', battle: 'Bat.' };
+
+  function chipText(game) {
+    return TYPE_CHIPS[game.type] || String(game.mode);
   }
 
   function buildGameRow(game, back) {
     var item = el('li');
     var row = el('button', 'row');
     row.type = 'button';
-    row.appendChild(el('div', 'mode-chip', String(game.mode)));
+    row.appendChild(el('div', 'mode-chip', chipText(game)));
     var text = el('div', 'row-text');
     text.appendChild(
       el('div', 'row-title', optionsLabel(game) + ' · ' + formatDate(game.finishedAt)),
@@ -218,7 +267,9 @@
       ),
     );
     row.appendChild(text);
-    var winner = el('div', 'row-figure', game.winner ? game.winner.name : '–');
+    var winnerText = game.winner ? game.winner.name : '–';
+    if (game.winnerTeam) winnerText = 'Équipe ' + game.winnerTeam;
+    var winner = el('div', 'row-figure', winnerText);
     winner.appendChild(el('small', null, 'Vainqueur'));
     row.appendChild(winner);
     row.addEventListener('click', function () {
@@ -231,12 +282,13 @@
   async function showHistory() {
     reset();
     setTab('history');
+    showFilter(showHistory);
     title.textContent = 'Historique';
     goBack = function () {
       window.location.href = '/';
     };
     try {
-      var games = await getJson('/api/history');
+      var games = await getJson('/api/history' + typeQuery('?'));
       gamesList.replaceChildren.apply(
         gamesList,
         games.map(function (game) {
@@ -280,7 +332,9 @@
             .join(', '),
         ),
       );
-      if (game.winner) {
+      if (game.winnerTeam) {
+        summary.appendChild(el('div', 'winner-banner', 'Vainqueur : équipe ' + game.winnerTeam));
+      } else if (game.winner) {
         summary.appendChild(el('div', 'winner-banner', 'Vainqueur : ' + game.winner.name));
       }
 

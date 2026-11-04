@@ -25,6 +25,15 @@
         <button type="button" class="tab" id="tab-history" aria-pressed="false">Historique</button>
       </nav>
 
+      <nav id="type-filter" class="tabs" aria-label="Type de partie" hidden>
+        <button type="button" class="tab" data-type="" aria-pressed="true">Tous</button>
+        <button type="button" class="tab" data-type="x01" aria-pressed="false">X01</button>
+        <button type="button" class="tab" data-type="around_the_world" aria-pressed="false">
+          Tour du monde
+        </button>
+        <button type="button" class="tab" data-type="battle" aria-pressed="false">Bataille</button>
+      </nav>
+
       <main class="main">
         <p id="message" class="muted" hidden></p>
 
@@ -41,7 +50,7 @@
               <div id="player-archived" class="badge" hidden>Archivé</div>
             </div>
           </div>
-          <dl id="stat-grid" class="stat-grid"></dl>
+          <div id="stat-groups"></div>
           <h2 class="section-title">Parties de ce joueur</h2>
         </section>
 

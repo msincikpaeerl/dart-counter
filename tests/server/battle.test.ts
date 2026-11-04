@@ -167,7 +167,7 @@ describe('Bataille (teams)', () => {
     expect(after.game).toBeNull();
   });
 
-  it('keeps the teams in a rematch and leaves battle games out of the statistics', async () => {
+  it('keeps the teams in a rematch and counts them in the Bataille statistics', async () => {
     const { id } = await start(500, [[ids[ana]], [ids[ben]]]);
     await send(id, [
       [20, 3],
@@ -181,7 +181,7 @@ describe('Bataille (teams)', () => {
     const state = await get(rematch.id);
     expect(state.teams.map((t) => t.playerIds)).toEqual([[ids[ana]], [ids[ben]]]);
 
-    // Finish the first game: it must not appear in the X01 history or statistics.
+    // Finish the first game: it appears under Bataille only, not under X01.
     await send(id, [
       [0, 0],
       [0, 0],
@@ -203,11 +203,19 @@ describe('Bataille (teams)', () => {
       [20, 1],
     ]);
     expect((await get(id)).status).toBe('finished');
-    const history = (await app.inject({ method: 'GET', url: '/api/history' })).json<unknown[]>();
-    expect(history).toEqual([]);
-    const stats = (await app.inject({ method: 'GET', url: '/api/stats/players' })).json<
-      unknown[]
+    const history = (await app.inject({ method: 'GET', url: '/api/history' })).json<
+      { id: number; type: string; options: string; winnerTeam: number | null }[]
     >();
-    expect(stats).toEqual([]);
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({ id, type: 'battle', options: '500 points de vie' });
+    expect(history[0]?.winnerTeam).toBe((await get(id)).winnerTeam);
+    const x01History = (await app.inject({ method: 'GET', url: '/api/history?type=x01' })).json();
+    expect(x01History).toEqual([]);
+    const stats = (
+      await app.inject({ method: 'GET', url: `/api/stats/players/${ids[ana]}?type=battle` })
+    ).json<{ groups: { label: string; stats: { gamesPlayed: number; gamesWon: number } }[] }>();
+    expect(stats.groups).toHaveLength(1);
+    expect(stats.groups[0]?.label).toBe('Bataille · 500 points de vie');
+    expect(stats.groups[0]?.stats.gamesPlayed).toBe(1);
   });
 });

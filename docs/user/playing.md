@@ -49,7 +49,7 @@ Darts are entered as in any game (board or keypad, **Raté · 0**, **Joueur suiv
 
 As soon as a team has no hit points left, it has lost: the turn stops at that dart, and the window **Équipe N gagne** names the winning team and its players. **Rejouer** starts a new game with the same teams and a new order inside each team. **Annuler** reopens a finished game by undoing the last dart.
 
-A Bataille game can be resumed or abandoned like any other (see [Resuming or abandoning a game](resume-game.md)). Bataille games are not part of the X01 statistics and history.
+A Bataille game can be resumed or abandoned like any other (see [Resuming or abandoning a game](resume-game.md)). Finished Bataille games appear in the statistics and history (see [Statistics and game history](statistics.md)).
 
 ## Correcting a mistake
 
@@ -74,7 +74,7 @@ The screen shows, instead of a score:
 
 When someone hits the last target (the bull in Débutant, T20 in Professionnel), the **Game shot !** window shows the winner and the game ends. **Rejouer** starts a new game with the same players and level.
 
-Around the world games are not part of the statistics and the history for now, which only cover X01.
+Finished around the world games appear in the statistics and history, with their level (see [Statistics and game history](statistics.md)).
 
 ## Entering darts with the keypad
 
