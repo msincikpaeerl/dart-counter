@@ -4,6 +4,8 @@ User-facing changes, newest first. One entry per merged ticket with a user-visib
 
 ## Unreleased
 
+- The numbers 1 to 20 around the dartboard on the game screen are now lighter (no longer bold), slightly larger and brighter, so they are easier to read on a phone or tablet; see [Playing a game](docs/user/playing.md).
+
 - New **Statistiques** screen: per-player games played and won, win %, 3-dart average (bust darts count 0 points), best visit, 180s, visits of 100+ and highest checkout, plus a history of finished games where each visit can be opened; abandoned and unfinished games are left out and archived players keep their figures; see [Statistics and game history](docs/user/statistics.md).
 
 - Unfinished games: opening the app now offers **Reprendre la partie** (scores, player and current turn restored, on any device) or **Abandonner** (the game is kept but left out of statistics); see [Resuming or abandoning a game](docs/user/resume-game.md).
