@@ -140,15 +140,29 @@ describe('around the world games', () => {
     expect(rematch.json<State>()).toMatchObject({ type: 'around_the_world', level: 'pro' });
   });
 
-  it('finished games stay out of the X01 statistics and history', async () => {
+  it('finished games are listed under their own type and level', async () => {
     const game = await start('beginner', [alice]);
     for (let sector = 1; sector <= 20; sector++) await throwDart(game.id, sector, 1);
     await throwDart(game.id, 25, 1);
-    expect((await app.inject({ method: 'GET', url: '/api/history' })).json<unknown[]>()).toEqual(
-      [],
-    );
+    const history = (await app.inject({ method: 'GET', url: '/api/history' })).json<
+      { id: number; typeLabel: string; options: string }[]
+    >();
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      id: game.id,
+      typeLabel: 'Tour du monde',
+      options: 'Débutant',
+    });
     expect(
-      (await app.inject({ method: 'GET', url: '/api/stats/players' })).json<unknown[]>(),
+      (await app.inject({ method: 'GET', url: '/api/history?type=x01' })).json<unknown[]>(),
     ).toEqual([]);
+    const stats = (await app.inject({ method: 'GET', url: `/api/stats/players/${alice}` })).json<{
+      groups: { label: string; stats: { gamesPlayed: number; gamesWon: number } }[];
+    }>();
+    expect(stats.groups).toHaveLength(1);
+    expect(stats.groups[0]).toMatchObject({
+      label: 'Tour du monde · Débutant',
+      stats: { gamesPlayed: 1, gamesWon: 1 },
+    });
   });
 });

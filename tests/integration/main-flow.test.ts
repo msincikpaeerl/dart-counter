@@ -120,7 +120,7 @@ describe.skipIf(!databaseUrl)(
 
       // Criterion 3: statistics reflect the game.
       const aliceStats = await app.inject({ method: 'GET', url: `/api/stats/players/${alice}` });
-      expect(aliceStats.json().stats).toMatchObject({
+      expect(aliceStats.json().groups[0].stats).toMatchObject({
         gamesPlayed: 1,
         gamesWon: 1,
         winPercent: 100,
@@ -131,7 +131,7 @@ describe.skipIf(!databaseUrl)(
       });
 
       const bobStats = await app.inject({ method: 'GET', url: `/api/stats/players/${bob}` });
-      expect(bobStats.json().stats).toMatchObject({
+      expect(bobStats.json().groups[0].stats).toMatchObject({
         gamesPlayed: 1,
         gamesWon: 0,
         winPercent: 0,

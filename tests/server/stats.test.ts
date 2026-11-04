@@ -80,7 +80,8 @@ describe('statistics and history API', () => {
     await finishedGame();
     const response = await app.inject({ method: 'GET', url: `/api/stats/players/${alice}` });
     expect(response.statusCode).toBe(200);
-    expect(response.json().stats).toEqual({
+    expect(response.json().groups[0].label).toBe('X01 · 301 · Simple out');
+    expect(response.json().groups[0].stats).toEqual({
       gamesPlayed: 1,
       gamesWon: 1,
       winPercent: 100,
@@ -91,9 +92,10 @@ describe('statistics and history API', () => {
       highestCheckout: 121,
     });
     const bobStats = (await app.inject({ method: 'GET', url: `/api/stats/players/${bob}` })).json();
-    expect(bobStats.stats).toMatchObject({ gamesPlayed: 1, gamesWon: 0, winPercent: 0 });
-    expect(bobStats.stats.threeDartAverage).toBe(60);
-    expect(bobStats.stats.highestCheckout).toBeNull();
+    const bobGroup = bobStats.groups[0].stats;
+    expect(bobGroup).toMatchObject({ gamesPlayed: 1, gamesWon: 0, winPercent: 0 });
+    expect(bobGroup.threeDartAverage).toBe(60);
+    expect(bobGroup.highestCheckout).toBeNull();
   });
 
   it('excludes abandoned and unfinished games from statistics and history', async () => {
@@ -121,8 +123,9 @@ describe('statistics and history API', () => {
     );
 
     const stats = (await app.inject({ method: 'GET', url: `/api/stats/players/${alice}` })).json();
-    expect(stats.stats.gamesPlayed).toBe(1);
-    expect(stats.stats.count180).toBe(1);
+    expect(stats.groups).toHaveLength(1);
+    expect(stats.groups[0].stats.gamesPlayed).toBe(1);
+    expect(stats.groups[0].stats.count180).toBe(1);
 
     const history = (await app.inject({ method: 'GET', url: '/api/history' })).json();
     expect(history).toHaveLength(1);
@@ -188,7 +191,7 @@ describe('statistics and history API', () => {
 
     const stats = (await app.inject({ method: 'GET', url: `/api/stats/players/${alice}` })).json();
     expect(stats.player.archived).toBe(true);
-    expect(stats.stats.gamesWon).toBe(1);
+    expect(stats.groups[0].stats.gamesWon).toBe(1);
     const list = (await app.inject({ method: 'GET', url: '/api/stats/players' })).json();
     expect(list.map((e: { player: { name: string } }) => e.player.name)).toContain('Alice');
     const detail = (await app.inject({ method: 'GET', url: `/api/history/${game.id}` })).json();
@@ -197,6 +200,102 @@ describe('statistics and history API', () => {
       await app.inject({ method: 'GET', url: `/api/history?playerId=${alice}` })
     ).json();
     expect(history).toHaveLength(1);
+  });
+
+  it('splits statistics by type and by combination of options, never mixing them', async () => {
+    await finishedGame(); // X01 301 simple out, won by Alice
+    const double = await db.createGame(301, [alice, bob], { doubleOut: true });
+    await play(double.id, [alice, bob], [[20, 1]]);
+    await db.setWinner(double.id, bob);
+    const x501 = await db.createGame(501, [alice, bob]);
+    await play(x501.id, [alice, bob], [[20, 1]]);
+    await db.setWinner(x501.id, bob);
+    const pro = await db.createAroundTheWorldGame('pro', [alice, bob]);
+    await db.setWinner(pro.id, alice);
+    const beginner = await db.createAroundTheWorldGame('beginner', [alice, bob]);
+    await db.setWinner(beginner.id, bob);
+    const battle = await db.createBattleGame(500, [[alice], [bob]]);
+    await db.setWinner(battle.id, alice);
+    const battle1000 = await db.createBattleGame(1000, [[alice, cleo], [bob]]);
+    await db.setWinner(battle1000.id, cleo);
+
+    type Entry = { label: string; type: string; stats: { gamesPlayed: number; gamesWon: number } };
+    const get = async (url: string) =>
+      (await app.inject({ method: 'GET', url })).json<{ groups: Entry[] }>().groups;
+    const summary = (groups: Entry[]) =>
+      groups.map((g) => [g.label, g.stats.gamesPlayed, g.stats.gamesWon]);
+
+    expect(summary(await get(`/api/stats/players/${alice}`))).toEqual([
+      ['X01 · 301 · Double out', 1, 0],
+      ['X01 · 301 · Simple out', 1, 1],
+      ['X01 · 501 · Simple out', 1, 0],
+      ['Tour du monde · Débutant', 1, 0],
+      ['Tour du monde · Professionnel', 1, 1],
+      ['Bataille · 1000 points de vie', 1, 1], // teammate Cléo won for the team
+      ['Bataille · 500 points de vie', 1, 1],
+    ]);
+    expect(summary(await get(`/api/stats/players/${alice}?type=around_the_world`))).toEqual([
+      ['Tour du monde · Débutant', 1, 0],
+      ['Tour du monde · Professionnel', 1, 1],
+    ]);
+    expect((await get(`/api/stats/players/${alice}?type=x01`)).every((g) => g.type === 'x01')).toBe(
+      true,
+    );
+    // X01 groups carry the average; other types only games played and won.
+    const x01 = (await get(`/api/stats/players/${alice}?type=x01`))[0] as unknown as {
+      stats: Record<string, unknown>;
+    };
+    expect(x01.stats).toHaveProperty('threeDartAverage');
+    const atw = (await get(`/api/stats/players/${alice}?type=around_the_world`))[0] as unknown as {
+      stats: Record<string, unknown>;
+    };
+    expect(atw.stats).not.toHaveProperty('threeDartAverage');
+
+    // Players list and history follow the filter too.
+    const list = (await app.inject({ method: 'GET', url: '/api/stats/players?type=battle' })).json<
+      { player: { name: string }; gamesPlayed: number }[]
+    >();
+    expect(list.map((e) => [e.player.name, e.gamesPlayed])).toEqual([
+      ['Alice', 2],
+      ['Bob', 2],
+      ['Cléo', 1],
+    ]);
+    const history = (await app.inject({ method: 'GET', url: '/api/history?type=battle' })).json<
+      { type: string; options: string; winnerTeam: number }[]
+    >();
+    expect(history.map((g) => [g.type, g.options, g.winnerTeam]).sort()).toEqual([
+      ['battle', '1000 points de vie', 1],
+      ['battle', '500 points de vie', 1],
+    ]);
+    const all = (await app.inject({ method: 'GET', url: '/api/history' })).json<unknown[]>();
+    expect(all).toHaveLength(7);
+  });
+
+  it('counts a player’s own double out as a double out game', async () => {
+    const strict = await db.createPlayer({
+      name: 'Dora',
+      nickname: null,
+      photoPath: null,
+      doubleOut: true,
+    });
+    const game = await db.createGame(301, [strict.id, bob]);
+    await db.setWinner(game.id, bob);
+    const groups = (
+      await app.inject({ method: 'GET', url: `/api/stats/players/${strict.id}` })
+    ).json<{
+      groups: { label: string }[];
+    }>().groups;
+    expect(groups.map((g) => g.label)).toEqual(['X01 · 301 · Double out']);
+    const bobGroups = (await app.inject({ method: 'GET', url: `/api/stats/players/${bob}` })).json<{
+      groups: { label: string }[];
+    }>().groups;
+    expect(bobGroups.map((g) => g.label)).toEqual(['X01 · 301 · Simple out']);
+  });
+
+  it('rejects an unknown type filter', async () => {
+    for (const url of ['/api/history?type=chess', '/api/stats/players?type=chess']) {
+      expect((await app.inject({ method: 'GET', url })).statusCode).toBe(400);
+    }
   });
 
   it('answers 404 for an unknown player or game', async () => {

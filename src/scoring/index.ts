@@ -11,6 +11,6 @@ export type {
   AroundTheWorldState,
   Target,
 } from './around-the-world.js';
-export { computePlayerStats } from './stats.js';
-export type { FinishedGameInput, PlayerStats } from './stats.js';
+export { computePlayerStats, computeWinStats } from './stats.js';
+export type { FinishedGameInput, FinishedResultInput, PlayerStats, WinStats } from './stats.js';
 export { suggestCheckout, formatDart, MAX_CHECKOUT, MAX_SIMPLE_CHECKOUT } from './checkout.js';
