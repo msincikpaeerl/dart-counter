@@ -173,6 +173,18 @@ h2 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Game type cards: the title scales with the card so a long name
+   ("Bataille") always stays inside its square. */
+#game-types .mode {
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+#game-types .mode-num {
+  font-size: min(56px, 26cqw);
+  white-space: nowrap;
+}
+
 .block h3 {
   margin: 8px 0 0;
   font-size: 13px;
@@ -624,6 +636,10 @@ h2 {
 
   .mode-num {
     font-size: 84px;
+  }
+
+  #game-types .mode-num {
+    font-size: min(84px, 26cqw);
   }
 
   .mode-sub {
