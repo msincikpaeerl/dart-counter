@@ -10,13 +10,18 @@ import { dartLabel, doubleOutPlayerIds, toEngineDart } from './games.js';
 import { present } from './players.js';
 
 /** Only finished games are ever read here: abandoned and unfinished ones are left out. */
+async function listFinishedX01(db: Database): Promise<FinishedGame[]> {
+  // Statistics and history only cover X01 for now: around the world games are left out.
+  return (await db.listFinishedGames()).filter((game) => game.type === 'x01');
+}
+
 async function loadFinished(db: Database) {
-  const games = await db.listFinishedGames();
+  const games = await listFinishedX01(db);
   const inputs = new Map<number, FinishedGameInput>();
   for (const game of games) {
     const records = await db.listDarts(game.id);
     inputs.set(game.id, {
-      startScore: game.mode,
+      startScore: game.mode ?? 501,
       players: game.players.map((p) => String(p.id)),
       doubleOutPlayers: doubleOutPlayerIds(game),
       darts: records.map(toEngineDart),
@@ -71,7 +76,7 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
 
   app.get<{ Querystring: { playerId?: string } }>('/api/history', async (request) => {
     const filter = request.query.playerId === undefined ? null : Number(request.query.playerId);
-    const games = await db.listFinishedGames();
+    const games = await listFinishedX01(db);
     return games
       .filter((game) => filter === null || game.players.some((p) => p.id === filter))
       .map(presentHistoryItem);
@@ -80,20 +85,21 @@ export function registerStatsRoutes(app: FastifyInstance, db: Database): void {
   app.get<{ Params: { id: string } }>('/api/history/:id', async (request, reply) => {
     const id = Number(request.params.id);
     const game = Number.isSafeInteger(id)
-      ? (await db.listFinishedGames()).find((g) => g.id === id)
+      ? (await listFinishedX01(db)).find((g) => g.id === id)
       : undefined;
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
+    const startScore = game.mode ?? 501;
     const records = await db.listDarts(game.id);
     const view = getGameView({
       config: {
-        startScore: game.mode,
+        startScore,
         players: game.players.map((p) => String(p.id)),
         doubleOutPlayers: doubleOutPlayerIds(game),
       },
       darts: records.map(toEngineDart),
     });
     const remaining: Record<string, number> = {};
-    for (const p of game.players) remaining[p.id] = game.mode;
+    for (const p of game.players) remaining[p.id] = startScore;
     const visits = view.visits.map((visit, index) => {
       remaining[visit.player] = (remaining[visit.player] as number) - visit.scored;
       return {
