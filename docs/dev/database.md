@@ -4,12 +4,12 @@ PostgreSQL 17, plain SQL, no ORM. The choice of migration mechanism is in [ADR 0
 
 ## Schema
 
-| Table          | Content                                                                                                                                                                                                              |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `players`      | `name` (unique, case-insensitive), `nickname`, `photo_path`, `archived`, `double_out` (false = simple out)                                                                                                           |
-| `games`        | `game_type` (`x01`), `mode` (X01 starting score: 301, 501 or 701), `double_out` (X01 finish; false = simple out), `status` (`in_progress`, `finished`, `abandoned`), `winner_player_id`, `started_at`, `finished_at` |
-| `game_players` | Players of a game with their `play_order` (1, 2, ...); unique per game                                                                                                                                               |
-| `darts`        | One row per dart: `game_id`, `player_id`, `visit_number`, `dart_number` (1-3), `segment`, `multiplier`, `score`, `bust`                                                                                              |
+| Table          | Content                                                                                                                                                                                                                                                                                                                     |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `players`      | `name` (unique, case-insensitive), `nickname`, `photo_path`, `archived`, `double_out` (false = simple out)                                                                                                                                                                                                                  |
+| `games`        | `game_type` (`x01` or `around_the_world`), `mode` (X01 starting score: 301, 501 or 701; null otherwise), `double_out` (X01 finish; false = simple out), `level` (around the world: `beginner` or `pro`; null otherwise), `status` (`in_progress`, `finished`, `abandoned`), `winner_player_id`, `started_at`, `finished_at` |
+| `game_players` | Players of a game with their `play_order` (1, 2, ...); unique per game                                                                                                                                                                                                                                                      |
+| `darts`        | One row per dart: `game_id`, `player_id`, `visit_number`, `dart_number` (1-3), `segment`, `multiplier`, `score`, `bust`                                                                                                                                                                                                     |
 
 Details worth knowing:
 

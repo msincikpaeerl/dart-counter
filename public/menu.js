@@ -10,7 +10,8 @@
 
   var players = [];
   var selected = []; // player ids, in the order they were ticked
-  var gameType = 'x01'; // the only type for now; its options are shown below it
+  var gameType = 'x01'; // 'x01' or 'around_the_world'; its options are shown below it
+  var level = 'beginner'; // Around the world option: 'beginner' or 'pro'
   var mode = 501; // X01 option: starting score
   var doubleOut = false; // X01 option: finish (simple out by default)
   var drawn = null; // array of players in play order, or null when the overlay is closed
@@ -65,7 +66,24 @@
     return copy;
   }
 
+  /** "Tour du monde · Débutant", or "X01 · 501 · Double out" for the options of a game. */
+  function optionsLabel(game) {
+    if (game.type === 'around_the_world') {
+      return 'Tour du monde · ' + (game.level === 'pro' ? 'Professionnel' : 'Débutant');
+    }
+    return 'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
+  }
+
   function renderModes() {
+    var atw = gameType === 'around_the_world';
+    $('x01-options').hidden = atw;
+    $('atw-options').hidden = !atw;
+    document.querySelectorAll('#game-types .mode').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.type === gameType));
+    });
+    document.querySelectorAll('#levels .mode').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.level === level));
+    });
     document.querySelectorAll('#modes .mode').forEach(function (button) {
       button.setAttribute('aria-pressed', String(Number(button.dataset.mode) === mode));
     });
@@ -75,7 +93,9 @@
         String((button.dataset.doubleOut === 'true') === doubleOut),
       );
     });
-    $('draw-label').textContent = 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
+    $('draw-label').textContent = atw
+      ? 'Tirer au sort · ' + optionsLabel({ type: gameType, level: level })
+      : 'Tirer au sort · ' + mode + (doubleOut ? ' · Double out' : '');
   }
 
   function renderCount() {
@@ -200,14 +220,19 @@
       var response = await fetch('/api/games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: gameType,
-          mode: mode,
-          doubleOut: doubleOut,
-          playerIds: drawn.map(function (p) {
-            return p.id;
-          }),
-        }),
+        body: JSON.stringify(
+          Object.assign(
+            { type: gameType },
+            gameType === 'around_the_world'
+              ? { level: level }
+              : { mode: mode, doubleOut: doubleOut },
+            {
+              playerIds: drawn.map(function (p) {
+                return p.id;
+              }),
+            },
+          ),
+        ),
       });
       var body = await response.json().catch(function () {
         return {};
@@ -228,6 +253,13 @@
   document.querySelectorAll('#game-types .mode').forEach(function (button) {
     button.addEventListener('click', function () {
       gameType = button.dataset.type;
+      renderModes();
+    });
+  });
+  document.querySelectorAll('#levels .mode').forEach(function (button) {
+    button.addEventListener('click', function () {
+      level = button.dataset.level;
+      renderModes();
     });
   });
   document.querySelectorAll('#modes .mode').forEach(function (button) {
@@ -261,12 +293,13 @@
 
   function showUnfinished(game) {
     unfinishedId = game.id;
-    $('resume-mode').textContent =
-      'X01 · ' + game.mode + (game.doubleOut ? ' · Double out' : ' · Simple out');
+    $('resume-mode').textContent = optionsLabel(game);
     $('resume-summary').textContent =
       game.players
         .map(function (p) {
-          return p.name + ' : ' + game.remaining[p.id];
+          return game.type === 'around_the_world'
+            ? p.name + ' : ' + game.progress[p.id].done + '/' + game.progress[p.id].total
+            : p.name + ' : ' + game.remaining[p.id];
         })
         .join(' · ') + '.';
     $('resume-error').hidden = true;

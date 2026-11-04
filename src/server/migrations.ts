@@ -85,4 +85,20 @@ ALTER TABLE games ADD COLUMN game_type text NOT NULL DEFAULT 'x01' CHECK (game_t
 ALTER TABLE games ADD COLUMN double_out boolean NOT NULL DEFAULT false;
 `,
   },
+  {
+    name: '0004_around_the_world',
+    sql: `
+-- A second game type: "around_the_world". It has no starting score (mode becomes optional,
+-- the CHECK on it still applies to X01 games) but a level: 'beginner' or 'pro'.
+ALTER TABLE games ALTER COLUMN mode DROP NOT NULL;
+ALTER TABLE games DROP CONSTRAINT games_game_type_check;
+ALTER TABLE games ADD CONSTRAINT games_game_type_check
+  CHECK (game_type IN ('x01', 'around_the_world'));
+ALTER TABLE games ADD COLUMN level text CHECK (level IN ('beginner', 'pro'));
+ALTER TABLE games ADD CONSTRAINT games_type_options_check CHECK (
+  (game_type = 'x01' AND mode IS NOT NULL AND level IS NULL)
+  OR (game_type = 'around_the_world' AND mode IS NULL AND level IS NOT NULL)
+);
+`,
+  },
 ];

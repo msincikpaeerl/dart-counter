@@ -31,12 +31,13 @@ export class DuplicatePlayerNameError extends Error {
 /** A game with its players in play order (first to throw first). */
 export interface Game {
   id: number;
-  /** The type of game; only X01 exists for now. */
-  type: 'x01';
-  /** X01 option: the starting score. */
-  mode: 301 | 501 | 701;
+  type: 'x01' | 'around_the_world';
+  /** X01 option: the starting score (null for other types). */
+  mode: 301 | 501 | 701 | null;
   /** X01 option: finish on a double for every player (a player's own double out also applies). */
   doubleOut: boolean;
+  /** Around the world option: the level (null for other types). */
+  level: 'beginner' | 'pro' | null;
   status: 'in_progress' | 'finished' | 'abandoned';
   players: Player[];
 }
@@ -79,10 +80,12 @@ export interface Database {
   archivePlayer(id: number): Promise<Player | null>;
   /** Creates a game; `playerIds` is the play order. Players must exist. */
   createGame(
-    mode: Game['mode'],
+    mode: 301 | 501 | 701,
     playerIds: number[],
     options?: { doubleOut?: boolean },
   ): Promise<Game>;
+  /** Creates an around the world game; `playerIds` is the play order. */
+  createAroundTheWorldGame(level: 'beginner' | 'pro', playerIds: number[]): Promise<Game>;
   getGame(id: number): Promise<Game | null>;
   /** Finished games only (never abandoned or in progress), most recent first. */
   listFinishedGames(): Promise<FinishedGame[]>;
@@ -141,10 +144,15 @@ export function createDatabase(databaseUrl: string): Database {
   async function loadGame(id: number): Promise<Game | null> {
     const game = await pool.query<{
       id: number;
-      mode: number;
+      game_type: Game['type'];
+      mode: number | null;
       double_out: boolean;
+      level: Game['level'];
       status: Game['status'];
-    }>('SELECT id::int AS id, mode, double_out, status FROM games WHERE id = $1', [id]);
+    }>(
+      'SELECT id::int AS id, game_type, mode, double_out, level, status FROM games WHERE id = $1',
+      [id],
+    );
     const row = game.rows[0];
     if (!row) return null;
     const players = await pool.query<PlayerRow>(
@@ -155,55 +163,76 @@ export function createDatabase(databaseUrl: string): Database {
     );
     return {
       id: row.id,
-      type: 'x01',
-      mode: row.mode === 301 ? 301 : row.mode === 701 ? 701 : 501,
+      type: row.game_type,
+      mode: row.game_type !== 'x01' ? null : row.mode === 301 ? 301 : row.mode === 701 ? 701 : 501,
       doubleOut: row.double_out,
+      level: row.level,
       status: row.status,
       players: players.rows.map(toPlayer),
     };
+  }
+
+  /** Inserts the game row (the given statement) and its players in one transaction. */
+  async function insertGame(
+    statement: { text: string; values: unknown[] },
+    playerIds: number[],
+  ): Promise<Game> {
+    const client = await pool.connect();
+    let gameId: number;
+    try {
+      await client.query('BEGIN');
+      const inserted = await client.query<{ id: number }>(statement.text, statement.values);
+      gameId = inserted.rows[0]?.id ?? 0;
+      await client.query(
+        `INSERT INTO game_players (game_id, player_id, play_order)
+         SELECT $1, p.id, p.ord FROM unnest($2::bigint[]) WITH ORDINALITY AS p(id, ord)`,
+        [gameId, playerIds],
+      );
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    const game = await loadGame(gameId);
+    if (!game) throw new Error('Game not found after creation');
+    return game;
   }
 
   return {
     async ping() {
       await pool.query('SELECT 1');
     },
-    async createGame(mode, playerIds, options = {}) {
-      const client = await pool.connect();
-      let gameId: number;
-      try {
-        await client.query('BEGIN');
-        const inserted = await client.query<{ id: number }>(
-          `INSERT INTO games (game_type, mode, double_out) VALUES ('x01', $1, $2)
-           RETURNING id::int AS id`,
-          [mode, options.doubleOut ?? false],
-        );
-        gameId = inserted.rows[0]?.id ?? 0;
-        await client.query(
-          `INSERT INTO game_players (game_id, player_id, play_order)
-           SELECT $1, p.id, p.ord FROM unnest($2::bigint[]) WITH ORDINALITY AS p(id, ord)`,
-          [gameId, playerIds],
-        );
-        await client.query('COMMIT');
-      } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
-      }
-      const game = await loadGame(gameId);
-      if (!game) throw new Error('Game not found after creation');
-      return game;
+    createGame(mode, playerIds, options = {}) {
+      return insertGame(
+        {
+          text: `INSERT INTO games (game_type, mode, double_out) VALUES ('x01', $1, $2)
+                 RETURNING id::int AS id`,
+          values: [mode, options.doubleOut ?? false],
+        },
+        playerIds,
+      );
+    },
+    createAroundTheWorldGame(level, playerIds) {
+      return insertGame(
+        {
+          text: `INSERT INTO games (game_type, level) VALUES ('around_the_world', $1)
+                 RETURNING id::int AS id`,
+          values: [level],
+        },
+        playerIds,
+      );
     },
     getGame: loadGame,
     async listFinishedGames() {
       const games = await pool.query<{
         id: number;
-        mode: number;
         winner_player_id: number | null;
         started_at: Date;
         finished_at: Date | null;
       }>(
-        `SELECT id::int AS id, mode, winner_player_id::int AS winner_player_id, started_at, finished_at
+        `SELECT id::int AS id, winner_player_id::int AS winner_player_id, started_at, finished_at
          FROM games WHERE status = 'finished' ORDER BY finished_at DESC NULLS LAST, id DESC`,
       );
       const result: FinishedGame[] = [];

@@ -188,7 +188,16 @@
   function renderStatus(current, remaining) {
     var box = $('status');
     var node;
-    if (state.bust) {
+    if (atw) {
+      node =
+        state.winnerId === null
+          ? el(
+              'div',
+              'hint',
+              'Cible : ' + targetText(current) + ' · Progression : ' + progressText(current),
+            )
+          : null;
+    } else if (state.bust) {
       var busted = playerById(state.bust.playerId);
       node = el('div', 'bust', 'Bust ! ' + busted.name + ' reste à ' + state.bust.remaining);
     } else if (state.checkout && state.winnerId === null) {
@@ -314,8 +323,8 @@
   }
 
   function renderBoard() {
-    var classes = {};
-    if (state.checkout && state.winnerId === null && !state.bust) {
+    var classes = atw ? atwZones() : {};
+    if (!atw && state.checkout && state.winnerId === null && !state.bust) {
       state.checkout.forEach(function (dart, index) {
         var keys =
           dart.multiplier === 1 && dart.sector !== 25
@@ -332,7 +341,44 @@
     }
   }
 
+  var atw = false; // the game is an around the world game
+
+  /** Progress of a player in around the world, e.g. "3 / 21". */
+  function progressText(player) {
+    var progress = state.progress[player.id];
+    return progress.done + ' / ' + progress.total;
+  }
+
+  /** The target to hit now, shown instead of the score. */
+  function targetText(player) {
+    var progress = state.progress[player.id];
+    return progress.target === null ? '✓' : progress.target;
+  }
+
+  /** Lights up the zones of the current target on the board. */
+  function atwZones() {
+    var t = state.target;
+    var classes = {};
+    if (!t || state.winnerId !== null) return classes;
+    var keys;
+    if (t.sector === 25) keys = ['sb', 'db'];
+    else if (t.multiplier === 1) keys = [zoneKey(t.sector, 1, 'i'), zoneKey(t.sector, 1, 'o')];
+    else if (t.multiplier === 2 || t.multiplier === 3) keys = [zoneKey(t.sector, t.multiplier)];
+    else
+      keys = [
+        zoneKey(t.sector, 1, 'i'),
+        zoneKey(t.sector, 1, 'o'),
+        zoneKey(t.sector, 2),
+        zoneKey(t.sector, 3),
+      ];
+    keys.forEach(function (key) {
+      classes[key] = 'seg blink';
+    });
+    return classes;
+  }
+
   function render() {
+    atw = state.type === 'around_the_world';
     var current = playerById(
       state.currentPlayerId !== null ? state.currentPlayerId : state.winnerId,
     );
@@ -342,21 +388,22 @@
     var forced = state.players.filter(function (p) {
       return p.doubleOut;
     });
-    $('mode').textContent =
-      'X01 · ' +
-      state.mode +
-      (state.doubleOut
-        ? ' · Double out'
-        : ' · Simple out' +
-          (forced.length > 0
-            ? ' (double out : ' +
-              forced
-                .map(function (p) {
-                  return p.name;
-                })
-                .join(', ') +
-              ')'
-            : ''));
+    $('mode').textContent = atw
+      ? 'Tour du monde · ' + (state.level === 'pro' ? 'Professionnel' : 'Débutant')
+      : 'X01 · ' +
+        state.mode +
+        (state.doubleOut
+          ? ' · Double out'
+          : ' · Simple out' +
+            (forced.length > 0
+              ? ' (double out : ' +
+                forced
+                  .map(function (p) {
+                    return p.name;
+                  })
+                  .join(', ') +
+                ')'
+              : ''));
     $('round').textContent = 'Manche ' + state.round;
     $('undo').disabled = !state.canUndo;
 
@@ -364,7 +411,7 @@
     avatar.id = 'cur-avatar';
     $('cur-avatar').replaceWith(avatar);
     $('cur-name').textContent = current.name;
-    $('cur-score').textContent = String(remaining);
+    $('cur-score').textContent = atw ? targetText(current) : String(remaining);
 
     var visit =
       state.currentVisit && state.currentVisit.playerId === current.id ? state.currentVisit : null;
@@ -379,7 +426,9 @@
         slot.textContent = i === thrown.length ? '▸' : '·';
       }
     }
-    $('total').textContent = '= ' + (visit ? visit.scored : 0);
+    $('total').textContent = atw
+      ? (visit ? visit.scored : 0) + ' touchée' + (visit && visit.scored > 1 ? 's' : '')
+      : '= ' + (visit ? visit.scored : 0);
 
     var position = state.players.indexOf(current);
     var others = $('others');
@@ -393,11 +442,18 @@
       var text = el('div', 'other-text');
       text.appendChild(el('span', 'other-name', player.name));
       var lastLine = el('span', 'other-last');
-      lastLine.appendChild(el('span', 'short', 'Dern. ' + lastText));
-      lastLine.appendChild(el('span', 'long', 'Dernière volée : ' + lastText));
+      if (atw) {
+        lastLine.appendChild(el('span', 'short', progressText(player)));
+        lastLine.appendChild(el('span', 'long', 'Progression : ' + progressText(player)));
+      } else {
+        lastLine.appendChild(el('span', 'short', 'Dern. ' + lastText));
+        lastLine.appendChild(el('span', 'long', 'Dernière volée : ' + lastText));
+      }
       text.appendChild(lastLine);
       row.appendChild(text);
-      row.appendChild(el('span', 'other-score', String(state.remaining[player.id])));
+      row.appendChild(
+        el('span', 'other-score', atw ? targetText(player) : String(state.remaining[player.id])),
+      );
       rows.push(row);
     }
     others.replaceChildren.apply(others, rows);
