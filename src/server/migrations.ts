@@ -86,14 +86,36 @@ ALTER TABLE games ADD COLUMN double_out boolean NOT NULL DEFAULT false;
 `,
   },
   {
-    name: '0004_battle_game_type',
+    name: '0004_around_the_world',
+    sql: `
+-- A second game type: "around_the_world". It has no starting score (mode becomes optional,
+-- the CHECK on it still applies to X01 games) but a level: 'beginner' or 'pro'.
+ALTER TABLE games ALTER COLUMN mode DROP NOT NULL;
+ALTER TABLE games DROP CONSTRAINT games_game_type_check;
+ALTER TABLE games ADD CONSTRAINT games_game_type_check
+  CHECK (game_type IN ('x01', 'around_the_world'));
+ALTER TABLE games ADD COLUMN level text CHECK (level IN ('beginner', 'pro'));
+ALTER TABLE games ADD CONSTRAINT games_type_options_check CHECK (
+  (game_type = 'x01' AND mode IS NOT NULL AND level IS NULL)
+  OR (game_type = 'around_the_world' AND mode IS NULL AND level IS NOT NULL)
+);
+`,
+  },
+  {
+    name: '0005_battle_game_type',
     sql: `
 -- Battle (two teams): "mode" is the starting hit points of each team (500, 1000 or 2000) and
--- game_players.team tells which team (1 or 2) a player is in. It stays empty for X01 games.
+-- game_players.team tells which team (1 or 2) a player is in. It stays empty for other types.
 ALTER TABLE games DROP CONSTRAINT games_mode_check;
 ALTER TABLE games ADD CONSTRAINT games_mode_check CHECK (mode IN (301, 501, 701, 500, 1000, 2000));
 ALTER TABLE games DROP CONSTRAINT games_game_type_check;
-ALTER TABLE games ADD CONSTRAINT games_game_type_check CHECK (game_type IN ('x01', 'battle'));
+ALTER TABLE games ADD CONSTRAINT games_game_type_check
+  CHECK (game_type IN ('x01', 'around_the_world', 'battle'));
+ALTER TABLE games DROP CONSTRAINT games_type_options_check;
+ALTER TABLE games ADD CONSTRAINT games_type_options_check CHECK (
+  (game_type IN ('x01', 'battle') AND mode IS NOT NULL AND level IS NULL)
+  OR (game_type = 'around_the_world' AND mode IS NULL AND level IS NOT NULL)
+);
 ALTER TABLE game_players ADD COLUMN team smallint CHECK (team IN (1, 2));
 `,
   },

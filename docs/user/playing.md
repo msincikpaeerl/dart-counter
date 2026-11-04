@@ -57,6 +57,25 @@ Press **Annuler** to remove the last dart. You can press it as many times as you
 
 If you reload the page or come back to the game later, it is shown exactly where it stopped.
 
+## Around the world (Tour du monde)
+
+In this game each player goes through a list of targets, in order. The first player to hit the last one wins. Everything else works as described above: you tap the board or use the keypad, **Raté · 0**, **Joueur suivant** and **Annuler** work the same, and the game can be resumed or abandoned.
+
+- **Débutant**: the targets are the numbers **1 to 20**, then the **bull** (25 or 50). Single, double and triple all count the same: for the target 7, any dart in the 7 section moves you on.
+- **Professionnel**: the targets are **S1, D1, T1, S2, D2, T2 … S20, D20, T20** (S = single, D = double, T = triple), 60 in all. Only the exact ring counts: when the target is D7, a single 7 or a triple 7 does nothing.
+
+Each player has three darts per turn. A dart that hits your current target moves you to the next one at once, and you keep throwing your remaining darts at that new target. A dart that misses leaves you on the same target. After three darts, the turn passes to the next player.
+
+The screen shows, instead of a score:
+
+- on the player card, the **target** in large figures (for example _7_ or _D7_), and under the board the line _Cible · Progression_ (for example _3 / 21_, the number of targets already hit out of the total);
+- for each other player, their own target and their progression;
+- on the board, the zones of the current target blink.
+
+When someone hits the last target (the bull in Débutant, T20 in Professionnel), the **Game shot !** window shows the winner and the game ends. **Rejouer** starts a new game with the same players and level.
+
+Around the world games are not part of the statistics and the history for now, which only cover X01.
+
 ## Entering darts with the keypad
 
 Above the board, a switch lets you choose between **Cible** (the board) and **Pavé numérique** (the keypad). You can change at any time during a game: a dart scores exactly the same in both modes.

@@ -22,23 +22,40 @@ export function createMemoryDb(options: { down?: boolean } = {}): Database {
   const darts = new Map<number, DartRecord[]>();
   const results = new Map<number, { winnerId: number; finishedAt: string }>();
 
+  function add(
+    options: Pick<Game, 'type' | 'mode' | 'doubleOut' | 'level'> & { teams?: Game['teams'] },
+    playerIds: number[],
+  ): Game {
+    const game: Game = {
+      id: games.length + 1,
+      teams: null,
+      ...options,
+      status: 'in_progress',
+      players: playerIds.map((id) => {
+        const found = players.find((p) => p.id === id);
+        if (!found) throw new Error('Unknown player');
+        return { ...found };
+      }),
+    };
+    games.push(game);
+    return structuredClone(game);
+  }
+
   return {
     async createGame(mode, playerIds, options = {}) {
-      const game: Game = {
-        id: games.length + 1,
-        type: options.teams ? 'battle' : 'x01',
-        mode,
-        teams: options.teams ?? null,
-        doubleOut: options.doubleOut ?? false,
-        status: 'in_progress',
-        players: playerIds.map((id) => {
-          const found = players.find((p) => p.id === id);
-          if (!found) throw new Error('Unknown player');
-          return { ...found };
-        }),
-      };
-      games.push(game);
-      return structuredClone(game);
+      return add(
+        { type: 'x01', mode, doubleOut: options.doubleOut ?? false, level: null },
+        playerIds,
+      );
+    },
+    async createAroundTheWorldGame(level, playerIds) {
+      return add({ type: 'around_the_world', mode: null, doubleOut: false, level }, playerIds);
+    },
+    async createBattleGame(hitPoints, teams) {
+      return add(
+        { type: 'battle', mode: hitPoints, doubleOut: false, level: null, teams },
+        teams.flat(),
+      );
     },
     async getGame(id) {
       const found = games.find((g) => g.id === id);

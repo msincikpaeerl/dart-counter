@@ -2,16 +2,19 @@ import type { FastifyInstance } from 'fastify';
 import {
   BATTLE_HIT_POINTS,
   DARTS_PER_VISIT,
+  aroundTheWorldTargets,
   createBattle,
   createGame,
   dartValue,
   formatDart,
+  getAroundTheWorldView,
   getBattleView,
   getGameView,
   suggestCheckout,
   type BattleState,
   type Dart,
   type GameState,
+  type GameView,
   type Visit,
 } from '../scoring/index.js';
 import type { DartRecord, Database, Game } from './db.js';
@@ -19,6 +22,7 @@ import { present } from './players.js';
 
 /** Players who must finish on a double: the whole game when it is set so, else those who force it. */
 export function doubleOutPlayerIds(game: Game): string[] {
+  if (game.type !== 'x01') return [];
   return game.players.filter((p) => game.doubleOut || p.doubleOut).map((p) => String(p.id));
 }
 
@@ -29,10 +33,35 @@ function presentGame(game: Game) {
     mode: game.mode,
     doubleOut: game.doubleOut,
     teams: game.teams,
+    level: game.level,
     status: game.status,
     // `doubleOut` of a player is the finish that really applies to them in this game.
-    players: game.players.map((p) => ({ ...present(p), doubleOut: game.doubleOut || p.doubleOut })),
+    players: game.players.map((p) => ({
+      ...present(p),
+      doubleOut: game.type === 'x01' && (game.doubleOut || p.doubleOut),
+    })),
   };
+}
+
+/** The scoring engine's view of a game, whatever its type (see `getAroundTheWorldView`). */
+function viewOf(game: Game, records: DartRecord[]): GameView {
+  if (game.type === 'around_the_world') {
+    return getAroundTheWorldView({
+      config: { level: game.level ?? 'beginner', players: game.players.map((p) => String(p.id)) },
+      darts: records.map(toEngineDart),
+    });
+  }
+  if (game.type === 'battle') {
+    const view = getBattleView(battleStateOf(game, records));
+    return {
+      remaining: {},
+      visits: view.visits.map((visit) => ({ ...visit, bust: false })),
+      currentPlayer: view.currentPlayer,
+      dartsLeft: view.dartsLeft,
+      winner: view.winner,
+    };
+  }
+  return getGameView(stateOf(game, records));
 }
 
 /** A stored dart as the scoring engine sees it (a miss is sector 0, multiplier 1). */
@@ -49,7 +78,7 @@ export function dartLabel(dart: Dart): string {
 function stateOf(game: Game, records: DartRecord[]): GameState {
   return {
     ...createGame({
-      startScore: game.mode,
+      startScore: game.mode ?? 501,
       players: game.players.map((p) => String(p.id)),
       doubleOutPlayers: doubleOutPlayerIds(game),
     }),
@@ -61,20 +90,11 @@ function battleStateOf(game: Game, records: DartRecord[]): BattleState {
   const [one, two] = game.teams ?? [[], []];
   return {
     ...createBattle({
-      hitPoints: game.mode,
+      hitPoints: game.mode ?? 500,
       teams: [one.map(String), two.map(String)],
     }),
     darts: records.map(toEngineDart),
   };
-}
-
-/** What every game type tells the routes: the visits, who plays next and who won. */
-function viewOf(game: Game, records: DartRecord[]) {
-  if (game.type === 'battle') {
-    const view = getBattleView(battleStateOf(game, records));
-    return { ...view, visits: view.visits.map((visit) => ({ ...visit, bust: false })) };
-  }
-  return getGameView(stateOf(game, records));
 }
 
 function isComplete(visit: Pick<Visit, 'finished' | 'darts'> & { bust?: boolean }): boolean {
@@ -129,6 +149,7 @@ function presentBattleState(game: Game, records: DartRecord[]) {
 /** The whole state of a game, computed by the scoring engine, as sent to the game page. */
 function presentState(game: Game, records: DartRecord[]) {
   if (game.type === 'battle') return presentBattleState(game, records);
+  if (game.type === 'around_the_world') return presentAroundTheWorldState(game, records);
   const view = getGameView(stateOf(game, records));
   const playerCount = game.players.length;
   const lastVisit = view.visits[view.visits.length - 1];
@@ -193,6 +214,62 @@ function presentState(game: Game, records: DartRecord[]) {
   };
 }
 
+/**
+ * The state of an around the world game as sent to the game page: every player's progress
+ * (targets hit out of the total) and current target; `remaining` is the number of targets hit.
+ */
+function presentAroundTheWorldState(game: Game, records: DartRecord[]) {
+  const view = viewOf(game, records);
+  const targets = aroundTheWorldTargets(game.level ?? 'beginner');
+  const lastVisit = view.visits[view.visits.length - 1];
+  const open = lastVisit && !isComplete(lastVisit) ? lastVisit : null;
+  const visitIndex = open ? view.visits.length - 1 : view.visits.length;
+  const winnerId = view.winner ? Number(view.winner) : null;
+  const shownVisit = open ?? (winnerId !== null ? (lastVisit ?? null) : null);
+
+  const lastScores: Record<string, number | null> = {};
+  for (const player of game.players) lastScores[player.id] = null;
+  for (const visit of view.visits.filter((v) => isComplete(v)))
+    lastScores[visit.player] = visit.scored;
+
+  const progress: Record<string, { done: number; total: number; target: string | null }> = {};
+  for (const player of game.players) {
+    const done = view.remaining[String(player.id)] as number;
+    progress[player.id] = { done, total: targets.length, target: targets[done]?.label ?? null };
+  }
+  const currentPlayerId = view.currentPlayer ? Number(view.currentPlayer) : null;
+  const current = currentPlayerId === null ? null : progress[currentPlayerId];
+  const target = current ? (targets[current.done] ?? null) : null;
+
+  return {
+    ...presentGame(game),
+    status:
+      game.status === 'abandoned' ? 'abandoned' : winnerId !== null ? 'finished' : 'in_progress',
+    remaining: view.remaining,
+    progress,
+    // The target the current player aims at; the page lights it up on the board.
+    target: target
+      ? { sector: target.sector, multiplier: target.multiplier, label: target.label }
+      : null,
+    round: Math.floor(visitIndex / game.players.length) + 1,
+    currentPlayerId,
+    winnerId,
+    dartsLeft: view.dartsLeft,
+    canUndo: records.length > 0,
+    currentVisit: shownVisit
+      ? {
+          playerId: Number(shownVisit.player),
+          darts: shownVisit.darts.map((dart) => ({ label: dartLabel(dart), score: 0 })),
+          bust: false,
+          scored: shownVisit.scored,
+        }
+      : null,
+    lastScores,
+    checkout: undefined,
+    bust: null,
+  };
+}
+
 /** Where the next dart goes (player, visit number, dart number) for the current state. */
 function nextSlot(game: Game, records: DartRecord[]) {
   const view = viewOf(game, records);
@@ -253,6 +330,8 @@ interface CreateBody {
   /** X01 options. */
   mode?: unknown;
   doubleOut?: unknown;
+  /** Around the world option. */
+  level?: unknown;
   playerIds?: unknown;
   /** Battle: the player ids of team 1 and of team 2. */
   teams?: unknown;
@@ -274,7 +353,7 @@ function parseTeams(value: unknown): [number[], number[]] | null {
 
 export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Body: CreateBody }>('/api/games', async (request, reply) => {
-    const { type = 'x01', mode, doubleOut = false, playerIds, teams } = request.body ?? {};
+    const { type = 'x01', mode, doubleOut = false, level, playerIds, teams } = request.body ?? {};
     if (type === 'battle') {
       if (!(BATTLE_HIT_POINTS as readonly unknown[]).includes(mode)) {
         return reply.code(400).send({ error: 'Choisissez 500, 1000 ou 2000 points de vie.' });
@@ -291,19 +370,21 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
           return reply.code(400).send({ error: 'Un des joueurs choisis n’est plus disponible.' });
         }
       }
-      const game = await db.createGame(mode as 500 | 1000 | 2000, parsed.flat(), {
-        teams: parsed,
-      });
+      const game = await db.createBattleGame(mode as 500 | 1000 | 2000, parsed);
       return reply.code(201).send(presentGame(game));
     }
-    if (type !== 'x01') {
+    if (type !== 'x01' && type !== 'around_the_world') {
       return reply.code(400).send({ error: 'Type de partie inconnu.' });
     }
-    if (mode !== 301 && mode !== 501 && mode !== 701) {
-      return reply.code(400).send({ error: 'Choisissez 301, 501 ou 701.' });
-    }
-    if (typeof doubleOut !== 'boolean') {
-      return reply.code(400).send({ error: 'Choisissez simple out ou double out.' });
+    if (type === 'x01') {
+      if (mode !== 301 && mode !== 501 && mode !== 701) {
+        return reply.code(400).send({ error: 'Choisissez 301, 501 ou 701.' });
+      }
+      if (typeof doubleOut !== 'boolean') {
+        return reply.code(400).send({ error: 'Choisissez simple out ou double out.' });
+      }
+    } else if (level !== 'beginner' && level !== 'pro') {
+      return reply.code(400).send({ error: 'Choisissez le niveau : débutant ou professionnel.' });
     }
     if (
       !Array.isArray(playerIds) ||
@@ -320,7 +401,10 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
         return reply.code(400).send({ error: 'Un des joueurs choisis n’est plus disponible.' });
       }
     }
-    const game = await db.createGame(mode, ids, { doubleOut });
+    const game =
+      type === 'around_the_world'
+        ? await db.createAroundTheWorldGame(level as 'beginner' | 'pro', ids)
+        : await db.createGame(mode as 301 | 501 | 701, ids, { doubleOut: doubleOut as boolean });
     return reply.code(201).send(presentGame(game));
   });
 
@@ -403,14 +487,21 @@ export function registerGameRoutes(app: FastifyInstance, db: Database): void {
   app.post<{ Params: { id: string } }>('/api/games/:id/rematch', async (request, reply) => {
     const game = await load(request.params.id);
     if (!game) return reply.code(404).send({ error: 'Partie introuvable.' });
-    // A Bataille rematch keeps the teams and shuffles the order inside each team.
-    const next = game.teams
-      ? await db.createGame(game.mode, game.teams.flat(), {
-          teams: [shuffled(game.teams[0]), shuffled(game.teams[1])],
-        })
-      : await db.createGame(game.mode, shuffled(game.players.map((player) => player.id)), {
-          doubleOut: game.doubleOut,
-        });
+    if (game.type === 'battle' && game.teams) {
+      // A Bataille rematch keeps the teams and shuffles the order inside each team.
+      const again = await db.createBattleGame(game.mode as 500 | 1000 | 2000, [
+        shuffled(game.teams[0]),
+        shuffled(game.teams[1]),
+      ]);
+      return reply.code(201).send(presentGame(again));
+    }
+    const order = shuffled(game.players.map((player) => player.id));
+    const next =
+      game.type === 'around_the_world'
+        ? await db.createAroundTheWorldGame(game.level ?? 'beginner', order)
+        : await db.createGame((game.mode ?? 501) as 301 | 501 | 701, order, {
+            doubleOut: game.doubleOut,
+          });
     return reply.code(201).send(presentGame(next));
   });
 }

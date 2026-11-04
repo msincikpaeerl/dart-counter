@@ -4,7 +4,7 @@ Every dart is saved on the server as soon as it is thrown. Closing the page, rel
 
 ## When you open the app
 
-If a game was left unfinished, a window **Partie en cours** appears on the home page. It shows the game type and its options (for example “X01 · 701 · Double out”) and what each player has left to score. For a **Bataille** game it shows “Bataille · 1000 PV” and the hit points left of each team. Two choices:
+If a game was left unfinished, a window **Partie en cours** appears on the home page. It shows the game type and its options (for example “X01 · 701 · Double out”) and what each player has left to score (for **Tour du monde**, for example “Tour du monde · Professionnel”, and the targets each player has hit out of the total; for **Bataille**, “Bataille · 1000 PV” and the hit points left of each team). Two choices:
 
 - **Reprendre la partie**: opens the game page exactly where it stopped: same type, starting score and finish, same scores, same player to throw, and the darts already thrown in the current turn. It works the same after a page reload or on another device that opens the app.
 - **Abandonner**: closes the game. You can then start a new one from the home page.
